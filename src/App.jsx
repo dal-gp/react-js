@@ -8,18 +8,20 @@ function App() {
 
   function handlePrevious() {
     if (step > 1) {
-      setStep(step - 1);
+      setStep((prevStep) => prevStep - 1);
     }
   }
 
   function handleNext() {
     if (step < 3) {
-      setStep(step + 1);
+      setStep((prevState) => prevState + 1);
     }
   }
   return (
     <>
-      <button onClick={() => setIsOpen(!isOpen)}>&times;</button>
+      <button onClick={() => setIsOpen((prevIsOpen) => !prevIsOpen)}>
+        &times;
+      </button>
       {isOpen && (
         <div className="steps">
           <div className="numbers">
