@@ -7,7 +7,9 @@ function App() {
 function Counter() {
   const [step, setStep] = useState(1);
   const [count, setCount] = useState(0);
-  const [today, setToday] = useState(new Date());
+
+  const date = new Date();
+  date.setDate(date.getDate() + count);
 
   function handleDecrementStep() {
     if (step > 1) {
@@ -21,14 +23,10 @@ function Counter() {
 
   function handleDecrementCount() {
     setCount((prevCount) => prevCount - step);
-    setToday(new Date(today.setDate(today.getDate() - step)));
   }
 
   function handleIncrementCount() {
     setCount((prevCount) => prevCount + step);
-    // setToday((today) => today.setDate(today.getDate() + step));
-    // new Date(today.setDate(today.getDate() + step)).toDateString();
-    setToday(new Date(today.setDate(today.getDate() + step)));
   }
 
   return (
@@ -43,10 +41,6 @@ function Counter() {
         <span>Count: {count}</span>
         <button onClick={handleIncrementCount}>+</button>
       </div>
-
-      {/* {count === 0 && <span>Today is </span>}
-      {count >= 1 && <span>`${count} days from today is `</span>}
-      {count < 1 && <span>`${Math.abs(count)} days ago was `</span>} */}
       <span>
         {count === 0
           ? "Today is "
@@ -54,8 +48,7 @@ function Counter() {
             ? `${count} days from today is `
             : `${count} days ago was `}
       </span>
-
-      {today.toDateString()}
+      {date.toDateString()}
     </div>
   );
 }
