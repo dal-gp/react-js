@@ -29,16 +29,30 @@ function Counter() {
     setCount((prevCount) => prevCount + step);
   }
 
+  function handleReset() {
+    setStep(1);
+    setCount(0);
+  }
+
   return (
     <div>
       <div>
-        <button onClick={handleDecrementStep}>-</button>
-        <span>Step: {step}</span>
-        <button onClick={handleIncrementStep}>+</button>
+        <input
+          type="range"
+          min="0"
+          max="10"
+          value={step}
+          onChange={(e) => setStep(Number(e.target.value))}
+        />
+        <span>{step}</span>
       </div>
       <div>
         <button onClick={handleDecrementCount}>-</button>
-        <span>Count: {count}</span>
+        <input
+          type="text"
+          value={count}
+          onChange={(e) => setCount(e.target.value)}
+        />
         <button onClick={handleIncrementCount}>+</button>
       </div>
       <span>
@@ -49,6 +63,11 @@ function Counter() {
             : `${count} days ago was `}
       </span>
       {date.toDateString()}
+      {step !== 1 || count !== 0 ? (
+        <div>
+          <button onClick={handleReset}>Reset</button>
+        </div>
+      ) : null}
     </div>
   );
 }
