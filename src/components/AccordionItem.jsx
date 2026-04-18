@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-export default function AccordionItem({ faq, num }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AccordionItem({ faq, num, curOpen, onOpen }) {
+  const isOpen = num === curOpen;
   function handleToggle() {
-    setIsOpen((isOpen) => !isOpen);
+    onOpen(isOpen ? null : num);
   }
 
   return (
