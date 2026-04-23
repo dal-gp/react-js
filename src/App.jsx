@@ -48,20 +48,21 @@ const tempWatchedData = [
 ];
 
 function App() {
+  const [movies, setMovies] = useState(tempMovieData);
   return (
     <>
-      <NavBar />
-      <Main />
+      <NavBar movies={movies} />
+      <Main movies={movies} />
     </>
   );
 }
 
-function NavBar() {
+function NavBar({ movies }) {
   return (
     <nav>
       <Logo />
       <Search />
-      <Numresults />
+      <Numresults movies={movies} />
     </nav>
   );
 }
@@ -87,24 +88,24 @@ function Search() {
   );
 }
 
-function Numresults() {
+function Numresults({ movies }) {
   return (
     <p>
-      Found <strong>3</strong> results
+      Found <strong>{movies.length}</strong> results
     </p>
   );
 }
 
-function Main() {
+function Main({ movies }) {
   return (
     <main>
-      <ListBox />
+      <ListBox movies={movies} />
       <WatchedBox />
     </main>
   );
 }
 
-function ListBox() {
+function ListBox({ movies }) {
   const [isOpenMovies, setIsOpen] = useState(true);
 
   return (
@@ -112,13 +113,12 @@ function ListBox() {
       <button onClick={() => setIsOpen((isOpenMovies) => !isOpenMovies)}>
         {isOpenMovies ? "-" : "+"}
       </button>
-      {isOpenMovies && <MovieList />}
+      {isOpenMovies && <MovieList movies={movies} />}
     </div>
   );
 }
 
-function MovieList() {
-  const [movies, setMovies] = useState(tempMovieData);
+function MovieList({ movies }) {
   return (
     <ul>
       {movies.map((movie) => (
