@@ -49,6 +49,7 @@ const tempWatchedData = [
 
 function App() {
   const [movies, setMovies] = useState(tempMovieData);
+  const [watchedMovies, setWatchedMovies] = useState(tempWatchedData);
   return (
     <>
       <NavBar>
@@ -56,11 +57,13 @@ function App() {
         <Numresults movies={movies} />
       </NavBar>
       <Main>
-        <ListBox>
+        <Box>
           <MovieList movies={movies} />
-        </ListBox>
-
-        <WatchedBox />
+        </Box>
+        <Box>
+          <WatchedSummary watchedMovies={watchedMovies} />
+          <WatchedMovieList watchedMovies={watchedMovies} />
+        </Box>
       </Main>
     </>
   );
@@ -108,15 +111,15 @@ function Main({ children }) {
   return <main>{children}</main>;
 }
 
-function ListBox({ children }) {
-  const [isOpenMovies, setIsOpen] = useState(true);
+function Box({ children }) {
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div>
       <button onClick={() => setIsOpen((isOpenMovies) => !isOpenMovies)}>
-        {isOpenMovies ? "-" : "+"}
+        {isOpen ? "-" : "+"}
       </button>
-      {isOpenMovies && children}
+      {isOpen && children}
     </div>
   );
 }
@@ -143,7 +146,7 @@ function Movie({ movie }) {
     </li>
   );
 }
-
+/*
 function WatchedBox() {
   const [isOpenWatched, setIsOpenWatched] = useState(true);
   const [watchedMovies, setWatchedMovies] = useState(tempWatchedData);
@@ -163,7 +166,7 @@ function WatchedBox() {
     </div>
   );
 }
-
+*/
 function WatchedSummary({ watchedMovies }) {
   const averageUserRating =
     watchedMovies.reduce((accu, movie) => accu + movie.userRating, 0) /
