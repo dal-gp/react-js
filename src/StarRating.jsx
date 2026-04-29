@@ -16,6 +16,12 @@ Creating the Star
     - use the state
     - update the state
 - for each star decide full or empty star aka display full or empty depending on rating
+
+Handling hover events
+- what we want? 1. click -> permanent rating (saved) 2. hover -> temporary rating (only when mouse is there). So we need one more memory.
+- mouse enters set temp memory , mouse leaves reset temp memory
+- show temporary memory
+- for each stars decide on show full or empty star ( so if hovering show hover star, else show saved stars)
 */
 const containerStyle = {
   display: "flex",
@@ -31,18 +37,34 @@ const textStyle = {
 };
 export default function StarRating({ maxRating = 5 }) {
   const [rating, setRating] = useState(0);
+  const [tempRating, setTempRating] = useState(0);
 
   function handleRate(rating) {
     setRating(rating);
+  }
+
+  function handleHoverIn(tempRating) {
+    setTempRating(tempRating);
+  }
+
+  function handleHoverOut() {
+    setTempRating(0);
   }
   return (
     <div style={containerStyle}>
       <div style={starContainerStyle}>
         {Array.from({ length: maxRating }, (_, i) => (
-          <Star i={i} key={i} onRate={handleRate} full={rating >= i + 1} />
+          <Star
+            i={i}
+            key={i}
+            onRate={handleRate}
+            full={tempRating ? tempRating >= i + 1 : rating >= i + 1}
+            onHoverIn={handleHoverIn}
+            onHoverOut={handleHoverOut}
+          />
         ))}
       </div>
-      <p style={textStyle}>{rating || ""}</p>
+      <p style={textStyle}>{tempRating || rating || ""}</p>
     </div>
   );
 }
@@ -53,9 +75,15 @@ const starStyle = {
   display: "block",
   cursor: "pointer",
 };
-function Star({ i, onRate, full }) {
+function Star({ i, onRate, full, onHoverIn, onHoverOut }) {
   return (
-    <span role="button" style={starStyle} onClick={() => onRate(i + 1)}>
+    <span
+      role="button"
+      style={starStyle}
+      onClick={() => onRate(i + 1)}
+      onMouseEnter={() => onHoverIn(i + 1)}
+      onMouseLeave={onHoverOut}
+    >
       {full ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
