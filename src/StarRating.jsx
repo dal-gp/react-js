@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 
 /*
 Building a reusable StarRating component
@@ -24,6 +25,7 @@ Handling hover events
 - for each stars decide on show full or empty star ( so if hovering show hover star, else show saved stars)
 
 Improving reusability with props
+- install prop-types
 - accept size and color props with default values of 48 and #fcc419” (p.textStyle)
   - move textStyle inside the component
   - use the provided value inside textStyle
@@ -42,7 +44,23 @@ Improving reusability with props
   - create dummy consumer's component e.g Test and use the StarRating inside Test component
   - ui changes so define state movieRating in Test component and use it for 'This movie was rated X stars'
   - update movieRating when rating state inside changes by passing set function to StarRating , accept and use it to update movieRating when rating changes
+
+PropTypes
+- install 
+- import 
+- COMPONENT.propTypes = { prop: validators }
 */
+
+StarRating.propTypes = {
+  maxRating: PropTypes.number,
+  size: PropTypes.number,
+  color: PropTypes.string,
+  className: PropTypes.string,
+  messages: PropTypes.array,
+  defaultRating: PropTypes.number,
+  onSetMovieRating: PropTypes.func,
+};
+
 const containerStyle = {
   display: "flex",
   alignItems: "center",
