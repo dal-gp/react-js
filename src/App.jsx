@@ -23,7 +23,7 @@ const tempMovieData = [
   },
 ];
 
-const tempWatchedData = [
+const tempWatchedMovieData = [
   {
     imdbID: "tt1375666",
     Title: "Inception",
@@ -47,6 +47,7 @@ const tempWatchedData = [
 ];
 function App() {
   const [movies, setMovies] = useState(tempMovieData);
+  const [watchedMovies, setWatchedMovies] = useState(tempWatchedMovieData);
   return (
     <>
       <NavBar>
@@ -55,10 +56,13 @@ function App() {
         <NumResults movies={movies} />
       </NavBar>
       <Main>
-        <ListBox>
+        <Box>
           <MovieList movies={movies} />
-        </ListBox>
-        <WatchedBox />
+        </Box>
+        <Box>
+          <WatchedSummary watchedMovies={watchedMovies} />
+          <WatchedMovieList watchedMovies={watchedMovies} />
+        </Box>
       </Main>
     </>
   );
@@ -99,7 +103,7 @@ function Main({ children }) {
   return <main className="main">{children}</main>;
 }
 
-function ListBox({ children }) {
+function Box({ children }) {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div>
@@ -133,42 +137,23 @@ function Movie({ movie }) {
   );
 }
 
-function WatchedBox() {
-  const [isOpen2, setIsOpen2] = useState(true);
-  return (
-    <div>
-      <button onClick={() => setIsOpen2((p) => !p)}>
-        {isOpen2 ? "-" : "+"}
-      </button>
-      {isOpen2 && (
-        <div>
-          <WatchedSummary />
-          <div>
-            <WatchedMovieList />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WatchedSummary() {
+function WatchedSummary({ watchedMovies }) {
   const avgIMDBRating =
-    tempWatchedData.reduce((accu, movie) => accu + movie.imdbRating, 0) /
-    tempWatchedData.length;
+    watchedMovies.reduce((accu, movie) => accu + movie.imdbRating, 0) /
+    watchedMovies.length;
   const avgUserRating =
-    tempWatchedData.reduce((accu, movie) => accu + movie.userRating, 0) /
-    tempWatchedData.length;
+    watchedMovies.reduce((accu, movie) => accu + movie.userRating, 0) /
+    watchedMovies.length;
 
   const avgRuntime =
-    tempWatchedData.reduce((accu, movie) => accu + movie.runtime, 0) /
-    tempWatchedData.length;
+    watchedMovies.reduce((accu, movie) => accu + movie.runtime, 0) /
+    watchedMovies.length;
   return (
     <div>
       <h2>Movies you watched</h2>
       <p>
         <span>#️⃣</span>
-        <span>{tempWatchedData.length} movies</span>
+        <span>{watchedMovies.length} movies</span>
       </p>
       <p>
         <span>⭐</span>
@@ -186,8 +171,7 @@ function WatchedSummary() {
   );
 }
 
-function WatchedMovieList() {
-  const [watchedMovies, setWatchedMovies] = useState(tempWatchedData);
+function WatchedMovieList({ watchedMovies }) {
   return (
     <ul>
       {watchedMovies.map((movie) => (
