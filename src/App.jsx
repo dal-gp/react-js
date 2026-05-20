@@ -55,7 +55,7 @@ function App() {
         <Search />
         <NumResults movies={movies} />
       </NavBar>
-      <Main>
+      {/* <Main>
         <Box>
           <MovieList movies={movies} />
         </Box>
@@ -63,6 +63,17 @@ function App() {
           <WatchedSummary watchedMovies={watchedMovies} />
           <WatchedMovieList watchedMovies={watchedMovies} />
         </Box>
+      </Main> */}
+      <Main>
+        <Box element={<MovieList movies={movies} />} />
+        <Box
+          element={
+            <>
+              <WatchedSummary watchedMovies={watchedMovies} />
+              <WatchedMovieList watchedMovies={watchedMovies} />
+            </>
+          }
+        ></Box>
       </Main>
     </>
   );
@@ -103,12 +114,12 @@ function Main({ children }) {
   return <main className="main">{children}</main>;
 }
 
-function Box({ children }) {
+function Box({ element }) {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div>
       <button onClick={() => setIsOpen((p) => !p)}>{isOpen ? "-" : "+"}</button>
-      {isOpen && children}
+      {isOpen && element}
     </div>
   );
 }
