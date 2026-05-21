@@ -50,15 +50,18 @@ const KEY = "2b26c15f";
 function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watchedMovies, setWatchedMovies] = useState(tempWatchedMovieData);
+  const [isLoading, setIsLoading] = useState(false);
   const query = "interstellar";
 
   useEffect(function () {
     async function fetchMovies() {
+      setIsLoading(true);
       const res = await fetch(
         `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
       );
       const data = await res.json();
       setMovies(data.Search);
+      setIsLoading(false);
     }
     fetchMovies();
   }, []);
@@ -69,28 +72,19 @@ function App() {
         <Search />
         <NumResults movies={movies} />
       </NavBar>
-      {/* <Main>
-        <Box>
-          <MovieList movies={movies} />
-        </Box>
+      <Main>
+        <Box>{isLoading ? <Loader /> : <MovieList movies={movies} />}</Box>
         <Box>
           <WatchedSummary watchedMovies={watchedMovies} />
           <WatchedMovieList watchedMovies={watchedMovies} />
         </Box>
-      </Main> */}
-      <Main>
-        <Box element={<MovieList movies={movies} />} />
-        <Box
-          element={
-            <>
-              <WatchedSummary watchedMovies={watchedMovies} />
-              <WatchedMovieList watchedMovies={watchedMovies} />
-            </>
-          }
-        ></Box>
       </Main>
     </>
   );
+}
+
+function Loader() {
+  return <p className="loader">Loading...</p>;
 }
 
 function NavBar({ children }) {
@@ -128,12 +122,12 @@ function Main({ children }) {
   return <main className="main">{children}</main>;
 }
 
-function Box({ element }) {
+function Box({ children }) {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div>
       <button onClick={() => setIsOpen((p) => !p)}>{isOpen ? "-" : "+"}</button>
-      {isOpen && element}
+      {isOpen && children}
     </div>
   );
 }
