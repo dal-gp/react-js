@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 const tempMovieData = [
   {
     imdbID: "tt137566",
@@ -45,9 +45,16 @@ const tempWatchedMovieData = [
     userRating: 9,
   },
 ];
+
+const KEY = "2b26c15f";
 function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watchedMovies, setWatchedMovies] = useState(tempWatchedMovieData);
+  useEffect(function () {
+    fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=interstellar`)
+      .then((res) => res.json())
+      .then((data) => setMovies(data.Search));
+  }, []);
   return (
     <>
       <NavBar>
