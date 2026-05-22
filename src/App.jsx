@@ -1,3 +1,19 @@
+// 1. handle case where there is no internet connection
+// throw Error if response not okay
+// wrap code into try/catch block
+// log error msg
+// better to display error msg onto the screen
+//    create ErrorMessage component that returns error message that is passed in as prop
+//    create error state
+//    set error state to the error message inside catch block
+//    conditionally display Loader if loading
+//    conditionally display MovieList if not loading and if not error
+//    conditionally display ErrorMessage if error
+// fix loader where it gets displayed when there is an error
+//    by moving setter funcion that sets loading state to false onto finally block
+// 2. handle case where user cannot find any movie for the search
+//    throw Error if Response is False after we already have the data
+
 import { useEffect, useState } from "react";
 const tempMovieData = [
   {
@@ -51,17 +67,27 @@ function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watchedMovies, setWatchedMovies] = useState(tempWatchedMovieData);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const query = "interstellar";
+  // const query = "asdf";
 
   useEffect(function () {
     async function fetchMovies() {
-      setIsLoading(true);
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+        );
+        if (!res.ok) throw new Error("Something went wrong");
+        const data = await res.json();
+        if (data.Response === "False") throw new Error("Movie not found");
+        setMovies(data.Search);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchMovies();
   }, []);
@@ -73,7 +99,11 @@ function App() {
         <NumResults movies={movies} />
       </NavBar>
       <Main>
-        <Box>{isLoading ? <Loader /> : <MovieList movies={movies} />}</Box>
+        <Box>
+          {isLoading && <Loader />}
+          {!isLoading && !error && <MovieList movies={movies} />}
+          {error && <FetchError message={error} />}
+        </Box>
         <Box>
           <WatchedSummary watchedMovies={watchedMovies} />
           <WatchedMovieList watchedMovies={watchedMovies} />
@@ -85,6 +115,15 @@ function App() {
 
 function Loader() {
   return <p className="loader">Loading...</p>;
+}
+
+function FetchError({ message }) {
+  return (
+    <p className="error">
+      <span>⛔</span>
+      {message}
+    </p>
+  );
 }
 
 function NavBar({ children }) {
