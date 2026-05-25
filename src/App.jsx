@@ -1,20 +1,34 @@
-// 1. handle case where there is no internet connection
-// throw Error if response not okay
-// wrap code into try/catch block
-// log error msg
-// better to display error msg onto the screen
-//    create ErrorMessage component that returns error message that is passed in as prop
-//    create error state
-//    set error state to the error message inside catch block
-//    conditionally display Loader if loading
-//    conditionally display MovieList if not loading and if not error
-//    conditionally display ErrorMessage if error
-// fix loader where it gets displayed when there is an error
-//    by moving setter funcion that sets loading state to false onto finally block
-// 2. handle case where user cannot find any movie for the search
-//    throw Error if Response is False after we already have the data
+// Task: Allow users to select a movie so that they can see some details about it
 
-import { useEffect, useState } from "react";
+// Need piece of state (UI changing):
+//  create a new piece of state 'selectedId'
+//  for? => that will store which movie has been selected
+//  inital val? => initially it is null as no movies is selected
+//  where? => in App since we are displaying movie details ont he right Box, this right Box also needs access
+//  why id? not whole obj? => movies we get from search are limited , no full details about the movie.
+//                            Need full details. Full details requires separate API call based on the selected id we get.
+
+// temporarily use 'tt1375666' id just to see what happens if we have a selected movie
+// create a new component MovieDetails
+// Display MovieDetails (temp: passing in id) if there is a selected id else display what was before
+// set state back to null if working okay
+
+// update the state in Movie item
+// where? in Movie component
+//    but rn Movie component does not have access, since we need to set selectedId which lives in App (owns the state).
+//    so create handler function 'handleSelectMovie' and pass it down as 'onSelectMovie' so Movie can update state which lives in App
+
+// Task: ability to close movie detail on a button
+//    where? in Movie component
+//    but Movie component doesnot have access
+//    so create handler function 'handleCloseMovie in App which sets selectedId to to null and pass it down as onCloseMovie to MovieDetails
+//    create button and assign the handler to onClick attribute
+//
+// Task: ability to close movie detail when user click on the same movie again
+//
+
+import { useState, useEffect } from "react";
+
 const tempMovieData = [
   {
     imdbID: "tt137566",
@@ -69,8 +83,15 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("interstellar");
+  const [selectedId, setSelectedId] = useState("tt1375666");
 
-  // const query = "asdf";
+  function handleSelectMovie(id) {
+    setSelectedId((cur) => (cur === id ? null : id));
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null);
+  }
 
   useEffect(
     function () {
@@ -85,6 +106,7 @@ function App() {
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie not found");
           setMovies(data.Search);
+          console.log(data);
         } catch (e) {
           setError(e.message);
         } finally {
@@ -110,12 +132,23 @@ function App() {
       <Main>
         <Box>
           {isLoading && <Loader />}
-          {!isLoading && !error && <MovieList movies={movies} />}
+          {!isLoading && !error && (
+            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+          )}
           {error && <FetchError message={error} />}
         </Box>
         <Box>
-          <WatchedSummary watchedMovies={watchedMovies} />
-          <WatchedMovieList watchedMovies={watchedMovies} />
+          {selectedId ? (
+            <MovieDetails
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+            />
+          ) : (
+            <>
+              <WatchedSummary watchedMovies={watchedMovies} />
+              <WatchedMovieList watchedMovies={watchedMovies} />
+            </>
+          )}
         </Box>
       </Main>
     </>
@@ -179,19 +212,23 @@ function Box({ children }) {
   );
 }
 
-function MovieList({ movies }) {
+function MovieList({ movies, onSelectMovie }) {
   return (
     <ul>
       {movies.map((movie) => (
-        <Movie key={movie.imdbID} movie={movie} />
+        <Movie key={movie.imdbID} movie={movie} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );
 }
 
-function Movie({ movie }) {
+function Movie({ movie, onSelectMovie }) {
   return (
-    <li>
+    <li
+      onClick={() => {
+        onSelectMovie(movie.imdbID);
+      }}
+    >
       <img src={movie.Poster} alt={movie.Title} />
       <h3>{movie.Title}</h3>
       <div>
@@ -200,6 +237,15 @@ function Movie({ movie }) {
         </p>
       </div>
     </li>
+  );
+}
+
+function MovieDetails({ selectedId, onCloseMovie }) {
+  return (
+    <div className="details">
+      <button onClick={onCloseMovie}>&larr;</button>
+      {selectedId}
+    </div>
   );
 }
 
