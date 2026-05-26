@@ -1,33 +1,25 @@
-// Task: Allow users to select a movie so that they can see some details about it
+/*
+ Task: Load movie details about individual movies
+ Fetch movie corresponding to the selectedId when MovieDetails mounts.
+ - each time component renders
+ - async fn getMovieDetails & immediately call it
+ - checkout API docs on how to search by ID
+ - fetch movie details using selectedId & log it
+ - display it on the UI so create state 'movie'
+ - set state
+ - destructure if you do not like the variables Title, Year, Poster, Runtime, 
+      imdbRating, Plot, Released, Actors, Director, Genre
+ - use it in JSX
+Use Star rating component before plot specifying maxRating 10, size of 24
+Fix: clicking on another movie not showing up
+- list selectedId in dependency array
+Implement loader
+Handle error
 
-// Need piece of state (UI changing):
-//  create a new piece of state 'selectedId'
-//  for? => that will store which movie has been selected
-//  inital val? => initially it is null as no movies is selected
-//  where? => in App since we are displaying movie details ont he right Box, this right Box also needs access
-//  why id? not whole obj? => movies we get from search are limited , no full details about the movie.
-//                            Need full details. Full details requires separate API call based on the selected id we get.
-
-// temporarily use 'tt1375666' id just to see what happens if we have a selected movie
-// create a new component MovieDetails
-// Display MovieDetails (temp: passing in id) if there is a selected id else display what was before
-// set state back to null if working okay
-
-// update the state in Movie item
-// where? in Movie component
-//    but rn Movie component does not have access, since we need to set selectedId which lives in App (owns the state).
-//    so create handler function 'handleSelectMovie' and pass it down as 'onSelectMovie' so Movie can update state which lives in App
-
-// Task: ability to close movie detail on a button
-//    where? in Movie component
-//    but Movie component doesnot have access
-//    so create handler function 'handleCloseMovie in App which sets selectedId to to null and pass it down as onCloseMovie to MovieDetails
-//    create button and assign the handler to onClick attribute
-//
-// Task: ability to close movie detail when user click on the same movie again
-//
+*/
 
 import { useState, useEffect } from "react";
+import StarRating from "./StarRating";
 
 const tempMovieData = [
   {
@@ -106,7 +98,6 @@ function App() {
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie not found");
           setMovies(data.Search);
-          console.log(data);
         } catch (e) {
           setError(e.message);
         } finally {
@@ -241,10 +232,74 @@ function Movie({ movie, onSelectMovie }) {
 }
 
 function MovieDetails({ selectedId, onCloseMovie }) {
+  const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating: imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+  } = movie;
+
+  useEffect(
+    function () {
+      async function getMovieDetails() {
+        try {
+          setIsLoading(true);
+          setError("");
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`,
+          );
+          if (!res.ok) throw new Error("Something went wrong!");
+          const data = await res.json();
+          setMovie(data);
+        } catch (e) {
+          setError(e.message);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      getMovieDetails();
+    },
+    [selectedId],
+  );
   return (
     <div className="details">
-      <button onClick={onCloseMovie}>&larr;</button>
-      {selectedId}
+      {isLoading && <Loader />}
+      {!error && !isLoading && (
+        <>
+          <div>
+            <button onClick={onCloseMovie}>&larr;</button>
+            <img src={poster} alt={`Poster of ${title}`} />
+            <h2>{title}</h2>
+            <p>
+              {released} &bull; {runtime}
+            </p>
+            <p>{genre}</p>
+            <p>
+              <span>⭐</span>
+              {imdbRating} IMDB rating
+            </p>
+          </div>
+          <div>
+            <StarRating maxRating={10} size={24} />
+            <p>
+              <em>{plot}</em>
+            </p>
+            <p>Starring {actors}</p>
+            <p>Directed by {director}</p>
+          </div>
+        </>
+      )}
+      {error && <FetchError message={error} />}
     </div>
   );
 }
