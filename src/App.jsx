@@ -1,20 +1,75 @@
 /*
- Task: Load movie details about individual movies
- Fetch movie corresponding to the selectedId when MovieDetails mounts.
- - each time component renders
- - async fn getMovieDetails & immediately call it
- - checkout API docs on how to search by ID
- - fetch movie details using selectedId & log it
- - display it on the UI so create state 'movie'
- - set state
- - destructure if you do not like the variables Title, Year, Poster, Runtime, 
-      imdbRating, Plot, Released, Actors, Director, Genre
- - use it in JSX
-Use Star rating component before plot specifying maxRating 10, size of 24
-Fix: clicking on another movie not showing up
-- list selectedId in dependency array
-Implement loader
-Handle error
+ Task: add watched movie to the list
+
+ create watchedMovies state in App if not already
+ ??? we'll create brand new object for each of these movies and pass each of these objs into watchedMovies array.
+
+ In App, create a function handleAddWatch that takes movie object ,which adds movie to the watchedList array
+
+ Pass it down as onAddWatched prop into MovieDetails coz there we'll have a button to add it to the watched list array.
+ create a button
+ Attach an event handler onClick and assign a handler function 'handleAdd' which will call the one we passed into the component as a prop. 
+ coz need to do lotsa stuff inside this handlerAdd function. 
+ This function we passed needs a new watched movie object so create a newWatchedMovie object - imdbID, title, year, poster, imdbRating, runtime
+ then call the function passin in the new watched movie object
+
+ close movie after adding it to the list
+ - we already have  handleCloseMovie function , also it is used in MovieDetails to go back
+ - call onCloseMovie as soon as the movie is added to the list
+
+ We are missing user ratings:
+ - we want to be able to get rating from the user and that should be added to 
+      newWatchedMovie object. in other words, we need the state that we have in 
+      StarRating outside the of the StarRating component and inside our 
+      MovieDetails component.
+- StarRating accepts function as a prop. So define a prop onSetMovieRating and in there
+      pass in a state setter function.
+- create a piece of state 'userRating' and pass in the setter fn to StarRating
+- now add the state userRating to the newWatchedMovie object when adding movie
+
+Now that we have userRating, Only allow user to add it to the list if user gave it a rating
+- basically display a button if userRating is > than 0 
+
+Prevent user from adding same movie multiple times
+- check if movie is already in the list if it is then user shouldnot be allowed
+    to rate. So simply display user's rating that user has already given
+- Pass watched movies array into the MovieDetails so that we can check if 
+    the move is part of the watched list
+- calculate new piece of derived state 'isWatched'
+- check if watched movies array includes currently selected movie by first 
+    transforming into array of IDs (aka grabbing all movies and take out imdbID)
+    and then chain includes passing in the selectedId
+- now based on that display <StarRating />, button else display paragraph with
+    text 'You rated movie with'
+
+Place the current rating so that the text reads like 'You rated movie with 5 ⭐'
+- we need to drive a new state from from the watched movies array
+- name is watchedUserRating
+- find the movie where imdbID equals selectedID
+- if exists take out userRating rom that object and assign it to watchedUserRating
+- use it in JSX
+
+give user ability to remove movie from the watched list
+- go to component where state lives - App
+- add function handleDeleteWatched which accepts id
+- filter out the one we no longer want by chceking if imdbID is different from
+    the passed in id so then that movie will stay in the array and movie be gets
+    filtered out if the id is the same
+- pass it down to WatchedMovie
+- create a button 
+- use the function on click passin the imdbID
+
+fix number displaying many digits for avgImdbRating, avgUserRating
+- .toFixed(2)
+
+
+ 
+
+
+
+
+
+ Project is getting bigger , split into files => one componnent per file
 
 */
 
@@ -71,7 +126,7 @@ const tempWatchedMovieData = [
 const KEY = "2b26c15f";
 function App() {
   const [movies, setMovies] = useState(tempMovieData);
-  const [watchedMovies, setWatchedMovies] = useState(tempWatchedMovieData);
+  const [watchedMovies, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("interstellar");
@@ -83,6 +138,14 @@ function App() {
 
   function handleCloseMovie() {
     setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+  }
+
+  function handleDeleteWatched(id) {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
   useEffect(
@@ -133,11 +196,16 @@ function App() {
             <MovieDetails
               selectedId={selectedId}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watchedMovies={watchedMovies}
             />
           ) : (
             <>
               <WatchedSummary watchedMovies={watchedMovies} />
-              <WatchedMovieList watchedMovies={watchedMovies} />
+              <WatchedMovieList
+                watchedMovies={watchedMovies}
+                onDeleteWatched={handleDeleteWatched}
+              />
             </>
           )}
         </Box>
@@ -231,10 +299,22 @@ function Movie({ movie, onSelectMovie }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseMovie }) {
+function MovieDetails({
+  selectedId,
+  onCloseMovie,
+  onAddWatched,
+  watchedMovies,
+}) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [userRating, setUserRating] = useState("");
+  const isWatched = watchedMovies
+    .map((movie) => movie.imdbID)
+    .includes(selectedId);
+  const watchedUserRating = watchedMovies.find(
+    (movie) => movie.imdbID === selectedId,
+  )?.userRating;
 
   const {
     Title: title,
@@ -248,6 +328,21 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Director: director,
     Genre: genre,
   } = movie;
+
+  function handleAdd() {
+    const newWatchedMovie = {
+      imdbID: selectedId,
+      title,
+      year,
+      poster,
+      imdbRating: Number(imdbRating),
+      runtime: Number(runtime.split(" ").at(0)),
+      userRating,
+    };
+    console.log(newWatchedMovie);
+    onAddWatched(newWatchedMovie);
+    onCloseMovie();
+  }
 
   useEffect(
     function () {
@@ -290,7 +385,22 @@ function MovieDetails({ selectedId, onCloseMovie }) {
             </p>
           </div>
           <div>
-            <StarRating maxRating={10} size={24} />
+            {isWatched ? (
+              <p>
+                You rated movie with {watchedUserRating} <span>⭐</span>
+              </p>
+            ) : (
+              <>
+                <StarRating
+                  maxRating={10}
+                  size={24}
+                  onSetMovieRating={setUserRating}
+                />
+                {userRating > 0 && (
+                  <button onClick={handleAdd}>+ Add to list</button>
+                )}
+              </>
+            )}
             <p>
               <em>{plot}</em>
             </p>
@@ -324,11 +434,11 @@ function WatchedSummary({ watchedMovies }) {
       </p>
       <p>
         <span>⭐</span>
-        <span>{avgIMDBRating}</span>
+        <span>{avgIMDBRating.toFixed(2)}</span>
       </p>
       <p>
         <span>🌟</span>
-        <span>{avgUserRating}</span>
+        <span>{avgUserRating.toFixed(2)}</span>
       </p>
       <p>
         <span>⌛</span>
@@ -338,21 +448,25 @@ function WatchedSummary({ watchedMovies }) {
   );
 }
 
-function WatchedMovieList({ watchedMovies }) {
+function WatchedMovieList({ watchedMovies, onDeleteWatched }) {
   return (
     <ul>
       {watchedMovies.map((movie) => (
-        <WatchedMovie key={movie.imdbID} movie={movie} />
+        <WatchedMovie
+          key={movie.imdbID}
+          movie={movie}
+          onDeleteWatched={onDeleteWatched}
+        />
       ))}
     </ul>
   );
 }
 
-function WatchedMovie({ movie }) {
+function WatchedMovie({ movie, onDeleteWatched }) {
   return (
     <li>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <p>
         <span>⭐</span>
         <span>{movie.imdbRating}</span>
@@ -363,8 +477,9 @@ function WatchedMovie({ movie }) {
       </p>
       <p>
         <span>⌛</span>
-        <span>{movie.runtime}</span>
+        <span>{movie.runtime} min</span>
       </p>
+      <button onClick={() => onDeleteWatched(movie.imdbID)}>x</button>
     </li>
   );
 }
