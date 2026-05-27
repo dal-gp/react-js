@@ -1,75 +1,20 @@
 /*
- Task: add watched movie to the list
+Adding a new effect: Changing page title
 
- create watchedMovies state in App if not already
- ??? we'll create brand new object for each of these movies and pass each of these objs into watchedMovies array.
-
- In App, create a function handleAddWatch that takes movie object ,which adds movie to the watchedList array
-
- Pass it down as onAddWatched prop into MovieDetails coz there we'll have a button to add it to the watched list array.
- create a button
- Attach an event handler onClick and assign a handler function 'handleAdd' which will call the one we passed into the component as a prop. 
- coz need to do lotsa stuff inside this handlerAdd function. 
- This function we passed needs a new watched movie object so create a newWatchedMovie object - imdbID, title, year, poster, imdbRating, runtime
- then call the function passin in the new watched movie object
-
- close movie after adding it to the list
- - we already have  handleCloseMovie function , also it is used in MovieDetails to go back
- - call onCloseMovie as soon as the movie is added to the list
-
- We are missing user ratings:
- - we want to be able to get rating from the user and that should be added to 
-      newWatchedMovie object. in other words, we need the state that we have in 
-      StarRating outside the of the StarRating component and inside our 
-      MovieDetails component.
-- StarRating accepts function as a prop. So define a prop onSetMovieRating and in there
-      pass in a state setter function.
-- create a piece of state 'userRating' and pass in the setter fn to StarRating
-- now add the state userRating to the newWatchedMovie object when adding movie
-
-Now that we have userRating, Only allow user to add it to the list if user gave it a rating
-- basically display a button if userRating is > than 0 
-
-Prevent user from adding same movie multiple times
-- check if movie is already in the list if it is then user shouldnot be allowed
-    to rate. So simply display user's rating that user has already given
-- Pass watched movies array into the MovieDetails so that we can check if 
-    the move is part of the watched list
-- calculate new piece of derived state 'isWatched'
-- check if watched movies array includes currently selected movie by first 
-    transforming into array of IDs (aka grabbing all movies and take out imdbID)
-    and then chain includes passing in the selectedId
-- now based on that display <StarRating />, button else display paragraph with
-    text 'You rated movie with'
-
-Place the current rating so that the text reads like 'You rated movie with 5 ⭐'
-- we need to drive a new state from from the watched movies array
-- name is watchedUserRating
-- find the movie where imdbID equals selectedID
-- if exists take out userRating rom that object and assign it to watchedUserRating
-- use it in JSX
-
-give user ability to remove movie from the watched list
-- go to component where state lives - App
-- add function handleDeleteWatched which accepts id
-- filter out the one we no longer want by chceking if imdbID is different from
-    the passed in id so then that movie will stay in the array and movie be gets
-    filtered out if the id is the same
-- pass it down to WatchedMovie
-- create a button 
-- use the function on click passin the imdbID
-
-fix number displaying many digits for avgImdbRating, avgUserRating
-- .toFixed(2)
-
-
- 
+Task: change page title in the browser to the movie that we are currently watching
+- manually change title to usePopcorn
+- we changing page title in the browser, so outside our app is a side effect
+    means we register side effect with the useEffect hook.
+    but where/in which component? => MovieDetails 'coz as soon as we click on 
+      a movie triggers MovieDetails and it mounts
+- create a different effect that runs on mount that sets document.title
+- fix: undefined appearing in the title when it first loads by returning early
+    when there is no title
+- TODO: fix: where movie title shows even after we go back
 
 
 
-
-
- Project is getting bigger , split into files => one componnent per file
+ TODO: Project is getting bigger , split into files => one componnent per file
 
 */
 
@@ -365,6 +310,14 @@ function MovieDetails({
       getMovieDetails();
     },
     [selectedId],
+  );
+
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+    },
+    [title],
   );
   return (
     <div className="details">
