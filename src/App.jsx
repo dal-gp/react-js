@@ -1,16 +1,7 @@
 /*
-Adding a new effect: Changing page title
+Cleaning up the title
 
-Task: change page title in the browser to the movie that we are currently watching
-- manually change title to usePopcorn
-- we changing page title in the browser, so outside our app is a side effect
-    means we register side effect with the useEffect hook.
-    but where/in which component? => MovieDetails 'coz as soon as we click on 
-      a movie triggers MovieDetails and it mounts
-- create a different effect that runs on mount that sets document.title
-- fix: undefined appearing in the title when it first loads by returning early
-    when there is no title
-- TODO: fix: where movie title shows even after we go back
+fixed: where movie title shows even after we go back by using cleanup function
 
 
 
@@ -316,6 +307,10 @@ function MovieDetails({
     function () {
       if (!title) return;
       document.title = `Movie | ${title}`;
+      return function () {
+        document.title = "usePopcorn";
+        console.log(`Clean up effect movie ${title}`);
+      };
     },
     [title],
   );
