@@ -1,9 +1,13 @@
 /*
-Cleaning up the title
+Clearning up data fetching
 
-fixed: where movie title shows even after we go back by using cleanup function
-
-
+Task: Clean up data fetching using native browser API -> abort controller
+- create new abort controller
+- connect abort controller with the fetch function
+- call abort in the clean up function
+- JS sees fetch cancel as error so put a guard saying 'only set error if error 
+    name is different from AbortError
+- set error to empty string after movies has been set
 
  TODO: Project is getting bigger , split into files => one componnent per file
 
@@ -86,19 +90,22 @@ function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
           const res = await fetch(
             `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal },
           );
           if (!res.ok) throw new Error("Something went wrong");
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie not found");
           setMovies(data.Search);
+          setError("");
         } catch (e) {
-          setError(e.message);
+          if (e.name !== "AbortError") setError(e.message);
         } finally {
           setIsLoading(false);
         }
@@ -109,6 +116,9 @@ function App() {
         return;
       }
       fetchMovies();
+      return function () {
+        controller.abort();
+      };
     },
     [query],
   );
