@@ -1,19 +1,39 @@
 /*
-Cleaning up data fetching
+# One more effect - listening to a keypress
 
-we clean up our fetch requests so that as soon as a new request is fired off,
-the previous one will stop(cancels previous request)
+need to globally listen to keypress event so that we can react to a keypress
+event in the entire app => by attaching an event listener to the entire doc (App)
 
-- use native browser API AbortController
-- hook it up with the fetch
-- use it inside cleanup fn
+it is a side effect , we are accessing DOM!
 
-but as soon as request gets cancelled JS sees this as an error and throws an error
-which is not an error
+useEffect = escape hatch (a way of escaping having to write all code using
+the react way :3 )
 
-- so if error name is different than AbortError only setError to the error msg
-- also setError to empty string after setMovies in order for this to work
+- add event listener 'keydown'
+- if event code is Escape call our handle close movie details component
 
+thing is event listener is still listening for keydown event and still executes
+even after we close the movie details page
+So we only attach event listener if we have our component MovieDetails in tree aka
+when component instance is actually mounted
+
+- move use effect hook from App -> MovieDetails component
+- make necessary changes like function name, add function to dep array
+
+now the problem is each time MovieDetails component mounts, a new event listener
+is added to the document (coz each time the effect gets executed it adds one more
+event listener to the document)
+=> What this means is that we need to clean up our event listener aka cleanup
+function that removes the listener everytime MovieDetails unmounts
+
+- so in cleanup function execute remove event listener 'keydown'
+
+function we pass into the removeEventListener must be exacly same as the one we
+pass into the addEventListener.
+
+- create a new function cut the function and use the function name instead on
+  both add event listener and remove event listener
+  
  TODO: Project is getting bigger , split into files => one component per file
 
 */
@@ -334,6 +354,23 @@ function MovieDetails({
     },
     [title],
   );
+
+  useEffect(
+    function () {
+      function closeMovieDetails(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+      document.addEventListener("keydown", closeMovieDetails);
+
+      return function () {
+        document.removeEventListener("keydown", closeMovieDetails);
+      };
+    },
+    [onCloseMovie],
+  );
+
   return (
     <div className="details">
       {isLoading && <Loader />}
