@@ -1,39 +1,8 @@
 /*
-# One more effect - listening to a keypress
+# close movie details if we search for another movie
 
-need to globally listen to keypress event so that we can react to a keypress
-event in the entire app => by attaching an event listener to the entire doc (App)
+- call function handle close movie details before calling fetchMovies
 
-it is a side effect , we are accessing DOM!
-
-useEffect = escape hatch (a way of escaping having to write all code using
-the react way :3 )
-
-- add event listener 'keydown'
-- if event code is Escape call our handle close movie details component
-
-thing is event listener is still listening for keydown event and still executes
-even after we close the movie details page
-So we only attach event listener if we have our component MovieDetails in tree aka
-when component instance is actually mounted
-
-- move use effect hook from App -> MovieDetails component
-- make necessary changes like function name, add function to dep array
-
-now the problem is each time MovieDetails component mounts, a new event listener
-is added to the document (coz each time the effect gets executed it adds one more
-event listener to the document)
-=> What this means is that we need to clean up our event listener aka cleanup
-function that removes the listener everytime MovieDetails unmounts
-
-- so in cleanup function execute remove event listener 'keydown'
-
-function we pass into the removeEventListener must be exacly same as the one we
-pass into the addEventListener.
-
-- create a new function cut the function and use the function name instead on
-  both add event listener and remove event listener
-  
  TODO: Project is getting bigger , split into files => one component per file
 
 */
@@ -131,7 +100,6 @@ function App() {
           setMovies(data.Search);
           setError("");
         } catch (e) {
-          console.log(e);
           if (e.name !== "AbortError") setError(e.message);
         } finally {
           setIsLoading(false);
@@ -143,7 +111,7 @@ function App() {
         setError("");
         return;
       }
-
+      handleCloseMovie();
       fetchMovies();
 
       return function () {
@@ -315,7 +283,6 @@ function MovieDetails({
       runtime: Number(runtime.split(" ").at(0)),
       userRating,
     };
-    console.log(newWatchedMovie);
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
@@ -349,7 +316,6 @@ function MovieDetails({
       document.title = `Movie | ${title}`;
       return function () {
         document.title = "usePopcorn";
-        console.log(`Clean up effect movie ${title}`);
       };
     },
     [title],
@@ -434,20 +400,24 @@ function WatchedSummary({ watchedMovies }) {
     <div>
       <h2>Movies you watched</h2>
       <p>
-        <span>#️⃣</span>
+        <span>#️⃣ </span>
         <span>{watchedMovies.length} movies</span>
       </p>
       <p>
         <span>⭐</span>
-        <span>{avgIMDBRating.toFixed(2)}</span>
+        <span>
+          {Number.isNaN(avgIMDBRating) ? " 0" : avgIMDBRating.toFixed(2)}
+        </span>
       </p>
       <p>
         <span>🌟</span>
-        <span>{avgUserRating.toFixed(2)}</span>
+        <span>
+          {Number.isNaN(avgUserRating) ? " 0" : avgUserRating.toFixed(2)}
+        </span>
       </p>
       <p>
         <span>⌛</span>
-        <span>{avgRuntime}</span>
+        <span>{Number.isNaN(avgRuntime) ? " 0" : avgRuntime}</span>
       </p>
     </div>
   );
