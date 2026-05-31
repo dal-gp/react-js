@@ -1,11 +1,20 @@
 /*
-Cleaning up the title
+Cleaning up data fetching
 
-fixed: where movie title shows even after we go back by using cleanup function
+we clean up our fetch requests so that as soon as a new request is fired off,
+the previous one will stop(cancels previous request)
 
+- use native browser API AbortController
+- hook it up with the fetch
+- use it inside cleanup fn
 
+but as soon as request gets cancelled JS sees this as an error and throws an error
+which is not an error
 
- TODO: Project is getting bigger , split into files => one componnent per file
+- so if error name is different than AbortError only setError to the error msg
+- also setError to empty string after setMovies in order for this to work
+
+ TODO: Project is getting bigger , split into files => one component per file
 
 */
 
@@ -61,12 +70,12 @@ const tempWatchedMovieData = [
 
 const KEY = "2b26c15f";
 function App() {
-  const [movies, setMovies] = useState(tempMovieData);
+  const [movies, setMovies] = useState([]);
   const [watchedMovies, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [query, setQuery] = useState("interstellar");
-  const [selectedId, setSelectedId] = useState("tt1375666");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
 
   function handleSelectMovie(id) {
     setSelectedId((cur) => (cur === id ? null : id));
@@ -86,29 +95,40 @@ function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
           const res = await fetch(
             `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal },
           );
           if (!res.ok) throw new Error("Something went wrong");
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie not found");
           setMovies(data.Search);
+          setError("");
         } catch (e) {
-          setError(e.message);
+          console.log(e);
+          if (e.name !== "AbortError") setError(e.message);
         } finally {
           setIsLoading(false);
         }
       }
+
       if (!query.length) {
         setMovies([]);
         setError("");
         return;
       }
+
       fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query],
   );
