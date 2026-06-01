@@ -1,7 +1,12 @@
 /*
-# close movie details if we search for another movie
+# Lazy state with a callback
 
-- call function handle close movie details before calling fetchMovies
+## store data into local storage 
+- use effect
+
+## read data from local storage and store it into watched movie state
+- use a callback fn inside useState hook (lazy loading)
+
 
  TODO: Project is getting bigger , split into files => one component per file
 
@@ -60,7 +65,11 @@ const tempWatchedMovieData = [
 const KEY = "2b26c15f";
 function App() {
   const [movies, setMovies] = useState([]);
-  const [watchedMovies, setWatched] = useState([]);
+  const [watchedMovies, setWatched] = useState(function () {
+    const storedValue = localStorage.getItem("watched");
+    return JSON.parse(storedValue);
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -76,10 +85,12 @@ function App() {
 
   function handleAddWatched(movie) {
     setWatched((watched) => [...watched, movie]);
+    // localStorage.setItem("watched", JSON.stringify([...watchedMovies, movie]));
   }
 
   function handleDeleteWatched(id) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+    // localStorage.setItem("watched", JSON.stringify(watched.filter((movie) => movie.imdbID !== id));
   }
 
   useEffect(
@@ -120,6 +131,14 @@ function App() {
     },
     [query],
   );
+
+  useEffect(
+    function () {
+      localStorage.setItem("watched", JSON.stringify(watchedMovies));
+    },
+    [watchedMovies],
+  );
+
   return (
     <>
       <NavBar>
