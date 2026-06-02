@@ -1,18 +1,26 @@
 /*
-# Lazy state with a callback
+# useRef
 
-## store data into local storage 
-- use effect
+use ref to focus search input field
+- follow 3 steps to select a DOM element with useRef
+  1. create the ref
+  2. attach it to element via ref prop
+  3. access it in useEffect
+- add event handler to focus on Enter
+- remove handler 
 
-## read data from local storage and store it into watched movie state
-- use a callback fn inside useState hook (lazy loading)
+also delete text if any when focused
+
+fix: pressing enter key when already focused deletes the text instead of searching
+- early return if active elemnt is the input element
+
 
 
  TODO: Project is getting bigger , split into files => one component per file
 
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import StarRating from "./StarRating";
 
 const tempMovieData = [
@@ -206,11 +214,23 @@ function Logo() {
 }
 
 function Search({ query, setQuery }) {
-  useEffect(function () {
-    const el = document.querySelector(".search");
-    el.focus();
-    console.log(el);
-  }, []);
+  const inputEl = useRef(null);
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement === inputEl.current) return;
+        if (e.code === "Enter") {
+          inputEl.current.focus();
+          setQuery("");
+        }
+      }
+      document.addEventListener("keydown", callback);
+      return () => document.removeEventListener("keydown", callback);
+    },
+    [setQuery],
+  );
+
   return (
     <input
       className="search"
@@ -218,6 +238,7 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputEl}
     />
   );
 }
