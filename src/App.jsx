@@ -67,7 +67,7 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [watchedMovies, setWatched] = useState(function () {
     const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
+    return storedValue ? JSON.parse(storedValue) : [];
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -206,8 +206,14 @@ function Logo() {
 }
 
 function Search({ query, setQuery }) {
+  useEffect(function () {
+    const el = document.querySelector(".search");
+    el.focus();
+    console.log(el);
+  }, []);
   return (
     <input
+      className="search"
       type="text"
       placeholder="Search movies..."
       value={query}
