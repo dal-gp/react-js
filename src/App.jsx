@@ -1,87 +1,7 @@
 /*
-## feat: Count rating decisions before adding to watched list
+## extract movie fetching logic into useMovies custom hook
 
-**User story:**
-As a product owner, I want to track how many times a user
-changed their rating before committing, so I can analyse
-decision confidence — without showing this counter in the UI.
-
-**Acceptance criteria:**
-- [ ] Each time the user selects a different star rating, the count increments
-- [ ] Count is NOT displayed anywhere in the UI
-- [ ] Count does NOT cause a re-render when updated
-- [ ] Count resets when a new movie is opened (component remounts)
-- [ ] Count is saved onto the watched movie object when added to list
-- [ ] Count is 0 if the user rated only once (no changes)
-
-**Flowchart:**
-```
-MovieDetails mounts
-    │
-    ▼
-countRef = { current: 0 }   ← useRef(0), persists across renders
-
-User clicks a star rating
-    │
-    ▼
-userRating state updates → component re-renders
-    │
-    ▼
-useEffect([userRating]) runs
-    │
-    ▼
-Is userRating truthy? (not empty string)
-    ├── No  → skip (effect ran on mount, rating not set yet)
-    └── Yes → countRef.current++   ← mutate directly, no re-render
-                   │
-                   ▼
-               UI does NOT re-render ✅ (ref update is silent)
-
-User clicks "Add to list"
-    │
-    ▼
-handleAdd() runs
-    │
-    ▼
-newWatchedMovie = {
-  ...movieData,
-  countRatingDecisions: countRef.current  ← read final count
-}
-    │
-    ▼
-onAddWatched(newWatchedMovie) → saved to watched state ✅
-
-
-Why NOT a regular variable?
-    │
-    ▼
-let count = 0  ← resets to 0 on every re-render
-    │
-    ▼
-Each click: count goes 0→1, then resets→0→1 again
-Final value is always 1 ❌ (only remembers the last click)
-```
-
-**Why a ref and not state?**
-- We don't want to show this in the UI → state would cause unnecessary re-renders
-- We need it to survive re-renders → regular variable resets every render
-- Ref = persistent + silent = perfect fit
-
-**Why update the ref in useEffect and not directly?**
-- Mutating ref.current in render logic is a side effect
-- useEffect runs after render — safe place to do imperative updates
-- Dep array [userRating] means it runs exactly when the rating changes
-
-**Why the `if (userRating)` guard?**
-- useEffect also runs on mount (initial render)
-- On mount, userRating is "" (empty string) — falsy
-- Without the guard, count starts at 1 before the user has done anything
-
-**Implementation:**
-- create ref starts at 0, persists across renders
-- increment whenever userRating changes (but not on mount)
-- read final count when adding to watched list
-
+170. creating our first custom hook: useMovies
 
 TODO: Project is getting bigger , split into files => one component per file
 
@@ -89,6 +9,7 @@ TODO: Project is getting bigger , split into files => one component per file
 
 import { useState, useEffect, useRef } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const tempMovieData = [
   {
@@ -137,16 +58,11 @@ const tempWatchedMovieData = [
   },
 ];
 
-const KEY = "2b26c15f";
 function App() {
-  const [movies, setMovies] = useState([]);
   const [watchedMovies, setWatched] = useState(function () {
     const storedValue = localStorage.getItem("watched");
     return storedValue ? JSON.parse(storedValue) : [];
   });
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
@@ -168,44 +84,7 @@ function App() {
     // localStorage.setItem("watched", JSON.stringify(watched.filter((movie) => movie.imdbID !== id));
   }
 
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-            { signal: controller.signal },
-          );
-          if (!res.ok) throw new Error("Something went wrong");
-          const data = await res.json();
-          if (data.Response === "False") throw new Error("Movie not found");
-          setMovies(data.Search);
-          setError("");
-        } catch (e) {
-          if (e.name !== "AbortError") setError(e.message);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (!query.length) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query],
-  );
+  const { movies, isLoading, error } = useMovies(query);
 
   useEffect(
     function () {
