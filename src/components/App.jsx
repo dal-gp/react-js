@@ -1,17 +1,15 @@
 /*
-## starting a new quiz
-- based on the status of active , display Questions component on click
-- create a new action type 'start' which sets the status to active
-- dispatch an action from button with the type of 'start'
+## displaying questions
+
 ```
 */
 import { useEffect, useReducer } from "react";
-import Main from "./components/Main";
+import Main from "./Main";
 import Header from "./Header";
 import Loader from "./Loader";
 import Error from "./Error";
-import StartScreen from "./components/StartScreen";
-import Question from "./components/Question";
+import StartScreen from "./StartScreen";
+import Question from "./Question";
 
 /**
  * All possible application statuses
@@ -20,7 +18,8 @@ import Question from "./components/Question";
  */
 const intialState = {
   questions: [], // array of questions object from API
-  status: "loading", // current app statuses - drives what UI is shown
+  status: "loading", // current app statuses - drives what UI is shown,
+  index: 0,
 };
 
 /**
@@ -55,7 +54,10 @@ function reducer(state, action) {
 }
 
 function App() {
-  const [{ questions, status }, dispatch] = useReducer(reducer, intialState);
+  const [{ questions, status, index }, dispatch] = useReducer(
+    reducer,
+    intialState,
+  );
   const numQuestions = questions.length;
 
   /**
@@ -85,7 +87,7 @@ function App() {
         {status === "ready" && (
           <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
-        {status === "active" && <Question />}
+        {status === "active" && <Question question={questions[index]} />}
       </Main>
     </div>
   );
