@@ -1,7 +1,8 @@
 /*
-## Handling loading, error and ready status
-- destructure state object for convenience 
-- handle loading, error and ready status
+## starting a new quiz
+- based on the status of active , display Questions component on click
+- create a new action type 'start' which sets the status to active
+- dispatch an action from button with the type of 'start'
 ```
 */
 import { useEffect, useReducer } from "react";
@@ -10,6 +11,7 @@ import Header from "./Header";
 import Loader from "./Loader";
 import Error from "./Error";
 import StartScreen from "./components/StartScreen";
+import Question from "./components/Question";
 
 /**
  * All possible application statuses
@@ -45,6 +47,8 @@ function reducer(state, action) {
        * status alone communicates the failures to the UI
        */
       return { ...state, status: "error" };
+    case "start":
+      return { ...state, status: "active" };
     default:
       throw new Error("Invalid action");
   }
@@ -76,8 +80,12 @@ function App() {
     <div className="app">
       <Header />
       <Main className="main">
-        {status === "loading" && <Loader />} {status === "error" && <Error />}
-        {status === "ready" && <StartScreen numQuestions={numQuestions} />}
+        {status === "loading" && <Loader />}
+        {status === "error" && <Error />}
+        {status === "ready" && (
+          <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
+        )}
+        {status === "active" && <Question />}
       </Main>
     </div>
   );
