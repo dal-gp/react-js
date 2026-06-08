@@ -1,52 +1,15 @@
 /*
-## fetch questions from fake API and manage with useReducer
-
-**User story:**
-As a user, I want the quiz to load questions from an API when
-the app starts, so I can take a real quiz instead of seeing
-hardcoded data.
-
-**Acceptance criteria:**
-- [ ] json-server runs on port 8000 serving data/questions.json
-- [ ] App fetches questions on mount using useEffect
-- [ ] Questions stored in reducer state (not useState)
-- [ ] Status transitions: "loading" → "ready" on success
-- [ ] Status transitions: "loading" → "error" on failure
-- [ ] Both questions and status update in ONE dispatch (not two)
-
-**Flowchart:**
-```
-App mounts
-    │
-    ▼
-useEffect([]) runs
-    │
-    ▼
-fetch("http://localhost:8000/questions")
-    │
-    ├── SUCCESS
-    │       │
-    │       ▼
-    │   dispatch({ type: "dataReceived", payload: data })
-    │       │
-    │       ▼
-    │   reducer: case "dataReceived"
-    │       → { ...state, questions: data, status: "ready" }
-    │       (TWO state values updated, ONE dispatch) ✅
-    │
-    └── FAILURE
-            │
-            ▼
-        dispatch({ type: "dataFailed" })
-            │
-            ▼
-        reducer: case "dataFailed"
-            → { ...state, status: "error" }
+## Handling loading, error and ready status
+- destructure state object for convenience 
+- handle loading, error and ready status
 ```
 */
 import { useEffect, useReducer } from "react";
 import Main from "./components/Main";
 import Header from "./Header";
+import Loader from "./Loader";
+import Error from "./Error";
+import StartScreen from "./components/StartScreen";
 
 /**
  * All possible application statuses
@@ -55,7 +18,7 @@ import Header from "./Header";
  */
 const intialState = {
   questions: [], // array of questions object from API
-  status: "", // current app statuses - drives what UI is shown
+  status: "loading", // current app statuses - drives what UI is shown
 };
 
 /**
@@ -88,22 +51,8 @@ function reducer(state, action) {
 }
 
 function App() {
-  const [state, dispatch] = useReducer(reducer, intialState);
-  //   useEffect(function () {
-  //     async function fetchQuestion() {
-  //       try {
-  //         const res = await fetch(`http://localhost:8000/questions`);
-  //         if (!res.ok) throw new Error("Something went wrong.");
-  //         const data = await res.json();
-  //         //   console.log(data);
-  //         dispatch({ type: "dataReceived", payload: data });
-  //       } catch (e) {
-  //         console.log(e);
-  //         dispatch({ type: "dataFailed" });
-  //       }
-  //     }
-  //     fetchQuestion();
-  //   }, []);
+  const [{ questions, status }, dispatch] = useReducer(reducer, intialState);
+  const numQuestions = questions.length;
 
   /**
    * Fetch questions on mount.
@@ -117,12 +66,18 @@ function App() {
       .then((data) => dispatch({ type: "dataReceived", payload: data }))
       .catch((err) => dispatch({ type: "dataFailed" }));
   }, []);
+
+  // status drives what the UI shows:
+  // "loading" → <Loader />
+  // "error"   → <Error />
+  // "ready"   → <StartScreen numQuestions={numQuestions} />
+  // (more cases added as the app grows)
   return (
     <div className="app">
       <Header />
       <Main className="main">
-        <p>1/15</p>
-        <p>Question</p>
+        {status === "loading" && <Loader />} {status === "error" && <Error />}
+        {status === "ready" && <StartScreen numQuestions={numQuestions} />}
       </Main>
     </div>
   );
