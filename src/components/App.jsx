@@ -1,63 +1,48 @@
 /*
-## Handle answer selection — highlight correct/wrong and award points
+## Move to next question and reset answer state
 
 **User story:**
-As a user, when I click an answer I want to see which option
-was correct, which was wrong, and have my score updated —
-all from that single click.
+As a user, after answering a question I want a "Next" button
+to appear so I can advance to the next question with a clean slate.
 
 **Acceptance criteria:**
-- [ ] Clicking an option stores it as the answer in state
-- [ ] Selected option gets "answer" CSS class (which shifts el to right)
-- [ ] Correct option gets "correct" class (blue), others get "wrong" (red/yellow)
-- [ ] All buttons disabled after an answer is given (no re-clicking)
-- [ ] Points awarded only if the correct option was selected
-- [ ] Points value comes from the question object (not hardcoded)
-- [ ] All 3 state changes (answer, points, disabled) happen in ONE dispatch
+- [ ] "Next" button only appears after an answer has been given
+- [ ] Clicking "Next" advances to the next question
+- [ ] Previous answer is cleared (buttons re-enabled, no colours shown)
+- [ ] Both index and answer update in ONE dispatch
 
 **Algorithm:**
-1. Add answer: null and points: 0 to initialState
-2. Add "newAnswer" case to reducer
-3. Inside "newAnswer": get current question from state.questions.at(state.index)
-4. Return { ...state, answer: payload, points: isCorrect ? state.points + question.points : state.points }
-5. In Options: map gives (option, index) — dispatch on button click with payload: index
-6. Derive hasAnswered = answer !== null
-7. Disable all buttons when hasAnswered
-8. Apply conditional classes based on hasAnswered, index === answer, index === correctOption
-
-**Why the points logic belongs in the reducer:**
-- The reducer already has access to state.questions and state.index
-- Computing points at the dispatch site would mean passing extra data in the action
-- Rule: dispatch raw facts (which option was clicked), reducer computes consequences
+1. Add "nextQuestion" case to reducer: index + 1, answer reset to null
+2. Create NextButton component that receives dispatch and answer
+3. If answer === null → return null (render nothing)
+4. Otherwise render the button with onClick dispatching "nextQuestion"
+5. Pass dispatch and answer into NextButton from parent
 
 **Flowchart:**
 ```
-User clicks option at index 2
+User answers a question
     │
     ▼
-dispatch({ type: "newAnswer", payload: 2 })
+answer state = 2 (not null)
     │
     ▼
-reducer: case "newAnswer"
-    │
-    ├── const question = state.questions.at(state.index)
-    │
-    ├── answer = 2 (action.payload)
-    │
-    ├── 2 === question.correctOption?
-    │       ├── Yes → points = state.points + question.points
-    │       └── No  → points = state.points (unchanged)
-    │
-    └── return { ...state, answer: 2, points: newPoints }
+NextButton renders the "Next" button (answer !== null)
+
+User clicks "Next"
     │
     ▼
-Re-render:
-  - hasAnswered = true → all buttons disabled
-  - index 2 === answer → gets "answer" class
-  - index === correctOption → gets "correct" / others get "wrong"
+dispatch({ type: "nextQuestion" })
+    │
+    ▼
+reducer: case "nextQuestion"
+    → { ...state, index: state.index + 1, answer: null }
+    (TWO values reset in ONE dispatch) ✅
+    │
+    ▼
+Re-render: new question shown, answer = null → NextButton disappears
+Options re-enabled, no colour classes applied
 ```
 
-```
 */
 import { useEffect, useReducer } from "react";
 import Main from "./Main";
@@ -66,6 +51,7 @@ import Loader from "./Loader";
 import Error from "./Error";
 import StartScreen from "./StartScreen";
 import Question from "./Question";
+import NextButton from "./NextButton";
 
 /**
  * All possible application statuses
@@ -124,6 +110,18 @@ function reducer(state, action) {
             : state.points, // wrong answer -> no change
       };
     }
+    case "nextQuestion": {
+      /**
+       * Advances to the next question and clears the previous answer.
+       * Both must update together - answer null re-enables options for new
+       * questions
+       */
+      return {
+        ...state,
+        index: state.index + 1,
+        answer: null, //reset so Options re-enable and colours clear
+      };
+    }
     default:
       throw new Error("Invalid action");
   }
@@ -164,11 +162,14 @@ function App() {
           <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
         {status === "active" && (
-          <Question
-            question={questions[index]}
-            dispatch={dispatch}
-            answer={answer}
-          />
+          <>
+            <Question
+              question={questions[index]}
+              dispatch={dispatch}
+              answer={answer}
+            />
+            <NextButton dispatch={dispatch} answer={answer} />
+          </>
         )}
       </Main>
     </div>
