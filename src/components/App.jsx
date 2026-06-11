@@ -1,47 +1,59 @@
 /*
-## Move to next question and reset answer state
+## Dispaly quiz progress bar and score
 
-**User story:**
-As a user, after answering a question I want a "Next" button
-to appear so I can advance to the next question with a clean slate.
+**User Story:**
+As a user, I want to see current question number, score and visual progress bar
+so I know how far thorugh the quiz I am and how many points I have earned.
 
 **Acceptance criteria:**
-- [ ] "Next" button only appears after an answer has been given
-- [ ] Clicking "Next" advances to the next question
-- [ ] Previous answer is cleared (buttons re-enabled, no colours shown)
-- [ ] Both index and answer update in ONE dispatch
+- [ ] Shows "Question X / 15" (1-based, not 0-based)
+- [ ] Shows current points out of max possible points
+- [ ] Progress bar fills as questions are answered
+- [ ] Progress bar advances immediately when an answer is selected
+       (not just when Next is clicked)
+- [ ] maxPossiblePoints derived from questions array (not stored in state)
 
 **Algorithm:**
-1. Add "nextQuestion" case to reducer: index + 1, answer reset to null
-2. Create NextButton component that receives dispatch and answer
-3. If answer === null → return null (render nothing)
-4. Otherwise render the button with onClick dispatching "nextQuestion"
-5. Pass dispatch and answer into NextButton from parent
+1. Create Progress component — accepts index, numQuestions, points, maxPossiblePoints, answer
+2. Display index + 1 (convert 0-based to 1-based for users)
+3. Compute maxPossiblePoints in App with questions.reduce()
+4. Use HTML <progress> element with max={numQuestions} and value={index + Number(answer !== null)}
+5. The Number(answer !== null) trick: false → 0 (unanswered), true → 1 (answered) → bar advances immediately on answer, before Next is clicked
+
+**Why maxPossiblePoints is derived state (not stored in reducer):**
+- It can be computed from questions array which is already in state
+- Storing a value that can be derived = unnecessary state = potential bugs
+- Calculated once and passed as a prop
+
+**Why the progress bar uses index + Number(answer !== null):**
+- Without this: bar only advances when Next is clicked (index increments)
+- With this: bar advances immediately when answer given (feels more responsive)
+- Number(false) = 0, Number(true) = 1 — a clean way to convert a boolean to 0 or 1
 
 **Flowchart:**
 ```
-User answers a question
+Quiz active, index=0, answer=null
     │
     ▼
-answer state = 2 (not null)
-    │
-    ▼
-NextButton renders the "Next" button (answer !== null)
+<progress value={0 + Number(false)} max={15} />
+  = value=0 → bar empty
 
-User clicks "Next"
+User clicks answer (e.g. index 2)
     │
     ▼
-dispatch({ type: "nextQuestion" })
+answer = 2 (not null)
     │
     ▼
-reducer: case "nextQuestion"
-    → { ...state, index: state.index + 1, answer: null }
-    (TWO values reset in ONE dispatch) ✅
+<progress value={0 + Number(true)} max={15} />
+  = value=1 → bar advances immediately ✅
+
+User clicks Next → index becomes 1, answer resets to null
     │
     ▼
-Re-render: new question shown, answer = null → NextButton disappears
-Options re-enabled, no colour classes applied
+<progress value={1 + Number(false)} max={15} />
+  = value=1 → same position, ready for next answer
 ```
+
 
 */
 import { useEffect, useReducer } from "react";
@@ -52,6 +64,7 @@ import Error from "./Error";
 import StartScreen from "./StartScreen";
 import Question from "./Question";
 import NextButton from "./NextButton";
+import Progress from "./Progress";
 
 /**
  * All possible application statuses
@@ -128,11 +141,15 @@ function reducer(state, action) {
 }
 
 function App() {
-  const [{ questions, status, index, answer }, dispatch] = useReducer(
+  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
     reducer,
     intialState,
   );
   const numQuestions = questions.length;
+  const maxPossiblePoints = questions.reduce(
+    (prev, cur) => prev + cur.points,
+    0,
+  );
 
   /**
    * Fetch questions on mount.
@@ -163,6 +180,13 @@ function App() {
         )}
         {status === "active" && (
           <>
+            <Progress
+              index={index}
+              numQuestions={numQuestions}
+              points={points}
+              answer={answer}
+              maxPossiblePoints={maxPossiblePoints}
+            />
             <Question
               question={questions[index]}
               dispatch={dispatch}
