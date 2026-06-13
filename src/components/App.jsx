@@ -1,58 +1,70 @@
 /*
-## Dispaly quiz progress bar and score
+## Finish the quiz - finish screen, highscore, and smart Next button 
 
 **User Story:**
-As a user, I want to see current question number, score and visual progress bar
-so I know how far thorugh the quiz I am and how many points I have earned.
+As a user, after answering the last question I want to see my final score, 
+percentage, an emoji rating, and my high score, instead of a broken 'Next' button
+that goes out of bounds.
+
 
 **Acceptance criteria:**
-- [ ] Shows "Question X / 15" (1-based, not 0-based)
-- [ ] Shows current points out of max possible points
-- [ ] Progress bar fills as questions are answered
-- [ ] Progress bar advances immediately when an answer is selected
-       (not just when Next is clicked)
-- [ ] maxPossiblePoints derived from questions array (not stored in state)
+- [ ] FinishScreen shows score, max points, percentage, emoji
+- [ ] On the last question, "Next" button shows "Finish" instead
+- [ ] Clicking "Finish" transititons status to "finished"
+- [ ] Emoji changes based on percentage range 
+- [ ] High score tracked - updates only if current score beats it
 
 **Algorithm:**
-1. Create Progress component — accepts index, numQuestions, points, maxPossiblePoints, answer
-2. Display index + 1 (convert 0-based to 1-based for users)
-3. Compute maxPossiblePoints in App with questions.reduce()
-4. Use HTML <progress> element with max={numQuestions} and value={index + Number(answer !== null)}
-5. The Number(answer !== null) trick: false → 0 (unanswered), true → 1 (answered) → bar advances immediately on answer, before Next is clicked
+1. Add highscore: 0 to initialState
+2. Add 'finish' case to reducer - sets status 'finished' AND updates highscore
+3. Update NextButton - Check index vs numQuestions - 1 to show "Next" or "Finish"
+4. Create FinishScreen - receives points, maxPossiblePoints, highscore
+5. Inside FinishScreen: compute percentage, assign emoji via if statements
+6. Add status === 'finished' condition in App JSX
 
-**Why maxPossiblePoints is derived state (not stored in reducer):**
-- It can be computed from questions array which is already in state
-- Storing a value that can be derived = unnecessary state = potential bugs
-- Calculated once and passed as a prop
+**Why highscore is updated in the reducer (not in FinishScreen):**
+- Highscore is state — it must live in the reducer
+- The "finish" action is the exact moment points are finalised
+- Updating both status and highscore in one dispatch = atomic transition
 
-**Why the progress bar uses index + Number(answer !== null):**
-- Without this: bar only advances when Next is clicked (index increments)
-- With this: bar advances immediately when answer given (feels more responsive)
-- Number(false) = 0, Number(true) = 1 — a clean way to convert a boolean to 0 or 1
+**Why use a let variable for emoji (not ternary):**
+- 5 mutually exclusive conditions — nested ternaries would be unreadable
+- Sequential if statements on a let variable is cleaner for many conditions
 
 **Flowchart:**
 ```
-Quiz active, index=0, answer=null
+User on last question (index = 14), answer given
     │
     ▼
-<progress value={0 + Number(false)} max={15} />
-  = value=0 → bar empty
+NextButton: index === numQuestions - 1 → show "Finish" button
+    │
+    ▼
+User clicks "Finish"
+    │
+    ▼
+dispatch({ type: "finish" })
+    │
+    ▼
+reducer: case "finish"
+    → status: "finished"
+    → highscore: state.points > state.highscore
+                 ? state.points        (new record)
+                 : state.highscore     (keep old record)
+    │
+    ▼
+Re-render:
+  status === "active"   → hidden
+  status === "finished" → FinishScreen shown ✅
 
-User clicks answer (e.g. index 2)
-    │
-    ▼
-answer = 2 (not null)
-    │
-    ▼
-<progress value={0 + Number(true)} max={15} />
-  = value=1 → bar advances immediately ✅
-
-User clicks Next → index becomes 1, answer resets to null
-    │
-    ▼
-<progress value={1 + Number(false)} max={15} />
-  = value=1 → same position, ready for next answer
+FinishScreen:
+  percentage = (points / maxPossiblePoints) * 100
+  100%         → 🏅
+  80–99%       → 🎉
+  50–79%       → 🙂
+  1–49%        → 🤔
+  0%           → 🤦‍♂️
 ```
+
 
 
 */
@@ -65,6 +77,7 @@ import StartScreen from "./StartScreen";
 import Question from "./Question";
 import NextButton from "./NextButton";
 import Progress from "./Progress";
+import FinishScreen from "./FinishScreen";
 
 /**
  * All possible application statuses
@@ -77,6 +90,7 @@ const intialState = {
   index: 0,
   answer: null, // null = no answer yet; number = index of selected option
   points: 0, // cumalative score
+  highscore: 0, // persists across restarts within the session
 };
 
 /**
@@ -135,16 +149,29 @@ function reducer(state, action) {
         answer: null, //reset so Options re-enable and colours clear
       };
     }
+    case "finish": {
+      /**
+       * Ends the quiz - transistions to finished status.
+       * Updates highscore if current points exceed previous best.
+       * Both status and highscore update in one atomic transition.
+       */
+      return {
+        ...state,
+        status: "finish",
+        highscore:
+          state.points > state.highscore
+            ? state.points // new record
+            : state.highscore, // keep existing best
+      };
+    }
     default:
       throw new Error("Invalid action");
   }
 }
 
 function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    intialState,
-  );
+  const [{ questions, status, index, answer, points, highscore }, dispatch] =
+    useReducer(reducer, intialState);
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
     (prev, cur) => prev + cur.points,
@@ -192,8 +219,20 @@ function App() {
               dispatch={dispatch}
               answer={answer}
             />
-            <NextButton dispatch={dispatch} answer={answer} />
+            <NextButton
+              dispatch={dispatch}
+              answer={answer}
+              index={index}
+              numQuestions={numQuestions}
+            />
           </>
+        )}
+        {status === "finish" && (
+          <FinishScreen
+            points={points}
+            maxPossiblePoints={maxPossiblePoints}
+            highscore={highscore}
+          />
         )}
       </Main>
     </div>
