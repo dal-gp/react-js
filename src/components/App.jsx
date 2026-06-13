@@ -1,61 +1,85 @@
 /*
-## Restart the quiz
+## Countdown timer - auto-finish while taking the quiz, and the quiz 
+automatically end when time runs out.
 
 **User Story:**
-As a user, after finishing the quiz I want a "Restart Quiz" button so I can 
-play again without refreshing the page.
+As a user, I want to see a countdown timer while taking the quiz, and have 
+the quiz automatically end when time runs out.
 
 **Acceptance criteria:**
-- [ ] "Restart Quiz" button appears on the FinishScreen
-- [ ] Clicking it resets all state except questions array (no re-fetch)
-- [ ] status resets to "ready" (shows StartScreen again)
-- [ ] index, answer, points, highscore all reset to initial values
-- [ ] questions remain in state (data doesnot need to be feched again)
+- [ ] Timer starts when quiz becomes active (not on page load)
+- [ ] Quiz automatically transitions to "finished" when timer hits 0.
+- [ ] Timer counts down once per second
+- [ ] Timer displays as MM:SS with leading zeros(e.g. 07:05)
+- [ ] Timer stops when component unmounts (no accumulating intervals)
+- [ ] Seconds are calculated from number of questions * SECS_PER_QUESTION
+- [ ] secondsRemaining starts as null, set to calculated value on 'start'
 
 **Algorithm:**
-1. Add "restart" case to reducer
-2. Return { ...initialState, questions: state.questions, status: "ready" }
-3. Pass dispatch to FinishScreen as a prop
-4. Add "Restart Quiz" button in FinishScreen that dispatches "restart"
+1. Add secondsRemaining: null to initialState
+2. In "start" case: set secondsRemaining = questions.length * SECS_PER_QUESTION
+3. Add "tick" case: decrement secondsRemaining by 1; if it reaches 0, set status to "finished"
+4. Create Timer component — receives dispatch and secondsRemaining as props
+5. In Timer useEffect([], [dispatch]): start setInterval that dispatches "tick" every 1000ms
+6. Store interval ID, return clearInterval(id) as cleanup
+7. Format display: mins = Math.floor(secs / 60), seconds = secs % 60
+8. Add leading zero: {mins < 10 && "0"}{mins}:{secs < 10 && "0"}{secs}
+9. Wrap Timer and NextButton in a Footer component (component composition)
 
-**Why spread initialState and override questions + status (not spread state):**
-- Spreading initialState guarantees every field returns to its default
-- No risk of accidentally keeping a stale value if new state fields are added later
-- Only two overrides needed: questions (keep them) + status (ready, not loading)
-- Alternative (spread state, override each field) works but is more error-prone
+**Why secondsRemaining starts as null (not a number):**
+- Questions aren't loaded yet at initialState — we don't know how many there are
+- Calculated in the "start" case when questions.length is available
+- If started as a hardcoded number it would be wrong before questions load
 
-**Two valid approaches — both work:**
-```jsx
-// ✅ Preferred — explicit reset to initialState, keep only questions
-case "restart":
-  return { ...initialState, questions: state.questions, status: "ready" };
+**Why the auto-finish check lives in the "tick" case (not in the component):**
+- The reducer owns all state transition logic
+- Checking in the component and dispatching a separate "finish" action would
+  cause an extra render and a timing gap
+- In the reducer: one tick → decrement + check → update both in one return
 
-// ✅ Also valid — spread state and manually reset each field
-case "restart":
-  return { ...state, status: "ready", index: 0, answer: null, points: 0, highscore: 0 };
+**Why Timer component (not App) starts the interval:**
+- Timer mounts exactly when status becomes "active"
+- App mounts on page load — interval would start immediately, not on quiz start
+- Timer unmounts on finish/restart → cleanup fires automatically → no leaked timers
+
+**The accumulating timer bug and its fix:**
+```
+WITHOUT cleanup:
+  Quiz start 1: interval #1 starts → ticks 1x/sec
+  Quiz restart: interval #1 still running + interval #2 starts → ticks 2x/sec
+  Quiz restart again: 3 intervals → 3x speed
+  → timer races to zero almost instantly
+
+WITH cleanup (clearInterval on unmount):
+  Quiz start: interval #1 starts
+  Quiz restart: Timer unmounts → clearInterval(#1) runs → interval stopped
+  Timer remounts: interval #2 starts fresh → 1x/sec ✅
 ```
 
 **Flowchart:**
 ```
-User on FinishScreen, clicks "Restart Quiz"
+status becomes "active" → Timer component mounts
     │
     ▼
-dispatch({ type: "restart" })
+useEffect runs → setInterval(dispatch("tick"), 1000)
+    │
+    ▼ (every second)
+dispatch({ type: "tick" })
     │
     ▼
-reducer: case "restart"
-    → { ...initialState,         ← reset everything to defaults
-        questions: state.questions, ← keep loaded questions (no re-fetch)
-        status: "ready" }           ← show StartScreen, not loading spinner
+reducer: case "tick"
+    ├── secondsRemaining: state.secondsRemaining - 1
+    └── status: secondsRemaining === 0 ? "finished" : state.status
     │
-    ▼
-Re-render:
-  status === "finished" → FinishScreen hidden
-  status === "ready"    → StartScreen shown ✅
-  questions unchanged   → quiz can begin immediately ✅
+    ├── secondsRemaining > 0 → timer display updates ✅
+    └── secondsRemaining === 0 → status = "finished"
+                                  → FinishScreen renders
+                                  → Timer unmounts
+                                  → clearInterval fires → timer stops ✅
 ```
 */
 import { useEffect, useReducer } from "react";
+
 import Main from "./Main";
 import Header from "./Header";
 import Loader from "./Loader";
@@ -65,6 +89,13 @@ import Question from "./Question";
 import NextButton from "./NextButton";
 import Progress from "./Progress";
 import FinishScreen from "./FinishScreen";
+import Timer from "./Timer";
+import Footer from "./Footer";
+
+/** Seconds allocated per question.
+ * Change here to adjust quiz duration.
+ */
+const SECS_PER_QUESTION = 30;
 
 /**
  * All possible application statuses
@@ -78,6 +109,7 @@ const initialState = {
   answer: null, // null = no answer yet; number = index of selected option
   points: 0, // cumalative score
   highscore: 0, // persists across restarts within the session
+  secondsRemaining: 10, // null until 'start' - questions.length not known yet
 };
 
 /**
@@ -89,7 +121,6 @@ const initialState = {
  * @returns { {questions: Array, status: string} } Next state
  */
 function reducer(state, action) {
-  console.log(state, action);
   switch (action.type) {
     case "dataReceived":
       /**
@@ -105,7 +136,13 @@ function reducer(state, action) {
        */
       return { ...state, status: "error" };
     case "start":
-      return { ...state, status: "active" };
+      return {
+        ...state,
+        status: "active",
+        // Calculate total time from question count - only possible once
+        // questions are loaded
+        secondsRemaining: state.questions.length * SECS_PER_QUESTION,
+      };
     case "newAnswer": {
       /**
        * Handles an answer selection.
@@ -144,7 +181,7 @@ function reducer(state, action) {
        */
       return {
         ...state,
-        status: "finish",
+        status: "finished",
         highscore:
           state.points > state.highscore
             ? state.points // new record
@@ -166,14 +203,28 @@ function reducer(state, action) {
         status: "ready", // go to start screen, not loading
       };
     }
+    case "tick": {
+      /**
+       * Decrements timer by 1
+       * Also checks if time has run out - transitions to 'finished' atomically.
+       * Two state values updated in one dispatch ( no extra render or timing gap )
+       */
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
+      };
+    }
     default:
       throw new Error("Invalid action");
   }
 }
 
 function App() {
-  const [{ questions, status, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { questions, status, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
     (prev, cur) => prev + cur.points,
@@ -221,15 +272,18 @@ function App() {
               dispatch={dispatch}
               answer={answer}
             />
-            <NextButton
-              dispatch={dispatch}
-              answer={answer}
-              index={index}
-              numQuestions={numQuestions}
-            />
+            <Footer>
+              <Timer dispatch={dispatch} secondsRemaining={secondsRemaining} />
+              <NextButton
+                dispatch={dispatch}
+                answer={answer}
+                index={index}
+                numQuestions={numQuestions}
+              />
+            </Footer>
           </>
         )}
-        {status === "finish" && (
+        {status === "finished" && (
           <FinishScreen
             points={points}
             maxPossiblePoints={maxPossiblePoints}
