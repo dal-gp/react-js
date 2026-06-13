@@ -1,72 +1,59 @@
 /*
-## Finish the quiz - finish screen, highscore, and smart Next button 
+## Restart the quiz
 
 **User Story:**
-As a user, after answering the last question I want to see my final score, 
-percentage, an emoji rating, and my high score, instead of a broken 'Next' button
-that goes out of bounds.
-
+As a user, after finishing the quiz I want a "Restart Quiz" button so I can 
+play again without refreshing the page.
 
 **Acceptance criteria:**
-- [ ] FinishScreen shows score, max points, percentage, emoji
-- [ ] On the last question, "Next" button shows "Finish" instead
-- [ ] Clicking "Finish" transititons status to "finished"
-- [ ] Emoji changes based on percentage range 
-- [ ] High score tracked - updates only if current score beats it
+- [ ] "Restart Quiz" button appears on the FinishScreen
+- [ ] Clicking it resets all state except questions array (no re-fetch)
+- [ ] status resets to "ready" (shows StartScreen again)
+- [ ] index, answer, points, highscore all reset to initial values
+- [ ] questions remain in state (data doesnot need to be feched again)
 
 **Algorithm:**
-1. Add highscore: 0 to initialState
-2. Add 'finish' case to reducer - sets status 'finished' AND updates highscore
-3. Update NextButton - Check index vs numQuestions - 1 to show "Next" or "Finish"
-4. Create FinishScreen - receives points, maxPossiblePoints, highscore
-5. Inside FinishScreen: compute percentage, assign emoji via if statements
-6. Add status === 'finished' condition in App JSX
+1. Add "restart" case to reducer
+2. Return { ...initialState, questions: state.questions, status: "ready" }
+3. Pass dispatch to FinishScreen as a prop
+4. Add "Restart Quiz" button in FinishScreen that dispatches "restart"
 
-**Why highscore is updated in the reducer (not in FinishScreen):**
-- Highscore is state — it must live in the reducer
-- The "finish" action is the exact moment points are finalised
-- Updating both status and highscore in one dispatch = atomic transition
+**Why spread initialState and override questions + status (not spread state):**
+- Spreading initialState guarantees every field returns to its default
+- No risk of accidentally keeping a stale value if new state fields are added later
+- Only two overrides needed: questions (keep them) + status (ready, not loading)
+- Alternative (spread state, override each field) works but is more error-prone
 
-**Why use a let variable for emoji (not ternary):**
-- 5 mutually exclusive conditions — nested ternaries would be unreadable
-- Sequential if statements on a let variable is cleaner for many conditions
+**Two valid approaches — both work:**
+```jsx
+// ✅ Preferred — explicit reset to initialState, keep only questions
+case "restart":
+  return { ...initialState, questions: state.questions, status: "ready" };
+
+// ✅ Also valid — spread state and manually reset each field
+case "restart":
+  return { ...state, status: "ready", index: 0, answer: null, points: 0, highscore: 0 };
+```
 
 **Flowchart:**
 ```
-User on last question (index = 14), answer given
+User on FinishScreen, clicks "Restart Quiz"
     │
     ▼
-NextButton: index === numQuestions - 1 → show "Finish" button
+dispatch({ type: "restart" })
     │
     ▼
-User clicks "Finish"
-    │
-    ▼
-dispatch({ type: "finish" })
-    │
-    ▼
-reducer: case "finish"
-    → status: "finished"
-    → highscore: state.points > state.highscore
-                 ? state.points        (new record)
-                 : state.highscore     (keep old record)
+reducer: case "restart"
+    → { ...initialState,         ← reset everything to defaults
+        questions: state.questions, ← keep loaded questions (no re-fetch)
+        status: "ready" }           ← show StartScreen, not loading spinner
     │
     ▼
 Re-render:
-  status === "active"   → hidden
-  status === "finished" → FinishScreen shown ✅
-
-FinishScreen:
-  percentage = (points / maxPossiblePoints) * 100
-  100%         → 🏅
-  80–99%       → 🎉
-  50–79%       → 🙂
-  1–49%        → 🤔
-  0%           → 🤦‍♂️
+  status === "finished" → FinishScreen hidden
+  status === "ready"    → StartScreen shown ✅
+  questions unchanged   → quiz can begin immediately ✅
 ```
-
-
-
 */
 import { useEffect, useReducer } from "react";
 import Main from "./Main";
@@ -84,7 +71,7 @@ import FinishScreen from "./FinishScreen";
  * Mutually exclusive - only one can be true at a time
  * "loading" | "error" | "ready" | "active" | "finished"
  */
-const intialState = {
+const initialState = {
   questions: [], // array of questions object from API
   status: "loading", // current app statuses - drives what UI is shown,
   index: 0,
@@ -164,6 +151,21 @@ function reducer(state, action) {
             : state.highscore, // keep existing best
       };
     }
+    case "restart": {
+      /**
+       * Resets the quiz to its initial state.
+       * Keeps question in state - avoids unnecessary re-fetch.
+       * Sets status to "ready" (not "loading") so StartScreen shows immediately.
+       *
+       * Spreading initialState ensures ALL fields are reset,
+       * even if new state properties are added in the future.
+       */
+      return {
+        ...initialState,
+        questions: state.questions, // preserve already-loaded questions
+        status: "ready", // go to start screen, not loading
+      };
+    }
     default:
       throw new Error("Invalid action");
   }
@@ -171,7 +173,7 @@ function reducer(state, action) {
 
 function App() {
   const [{ questions, status, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, intialState);
+    useReducer(reducer, initialState);
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
     (prev, cur) => prev + cur.points,
@@ -232,6 +234,7 @@ function App() {
             points={points}
             maxPossiblePoints={maxPossiblePoints}
             highscore={highscore}
+            dispatch={dispatch}
           />
         )}
       </Main>

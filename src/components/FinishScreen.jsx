@@ -4,16 +4,17 @@
  *
  * @param {number} points - Final score achieved
  * @param {number} maxPossiblePoints - Maximum achievable score
- * @param {highscore} - Best score achieved this session
+ * @param {highscore} highscore - Best score achieved this session
+ * @param {Function} dispatch - useReducer dispatch to trigger "restart"
  * @returns
  */
-function FinishScreen({ points, maxPossiblePoints, highscore }) {
+function FinishScreen({ points, maxPossiblePoints, highscore, dispatch }) {
   const percentage = (points / maxPossiblePoints) * 100;
 
   /**
    * Emoji selected based on percentage range.
    * Using a let + sequential ifs instead of nested ternaries
-   * because 5 conditions would be unreadable as a ternary chazin.
+   * because 5 conditions would be unreadable as a ternary chain.
    * @type {string}
    */
   let emoji;
@@ -29,6 +30,16 @@ function FinishScreen({ points, maxPossiblePoints, highscore }) {
         {maxPossiblePoints} ({Math.ceil(percentage)}%)
       </p>
       <p className="highscore">(Highscore: {highscore} points)</p>
+      {/**
+       * Restart dispatches "restart" - no payload needed, reducer handles every
+       * thing
+       */}
+      <button
+        className="btn btn-ui"
+        onClick={() => dispatch({ type: "restart" })}
+      >
+        Restart Quiz
+      </button>
     </div>
   );
 }
