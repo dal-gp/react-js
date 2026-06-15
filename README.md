@@ -20,3 +20,12 @@ Note: this project uses Vite, not Create React App. The dev command is
 - Vite (build tool)
 - React Router (routing and navigation)
 - CSS Modules (component-scoped styling)
+
+## What I learned
+
+Routing and single page applications - before this project I didnot understand
+what "single page application" meant. Now I do. When you click a link on a normal
+website the browser loads a completely new page from the server. In an SPA,
+JavaScript just swaps out the component and updates the URL without reloading.
+That is why it feels so fast and smooth. React Router is what handles this in
+React itself does not come with routing built in.
