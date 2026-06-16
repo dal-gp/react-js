@@ -27,11 +27,18 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **Setting up routes** - you need three components from React Router: `BrowserRouter` wraps the whole app, `Routes` is a container for your route definitions, and `Route` maps a URL path to a component. The `path="*"` route at the end catches any URL that doesn't match anything else - that is your 404 page.
 
+**Link vs NavLink** - you can't use a regular `<a>` tag for internal navigation in a React app because it causes a full page reload. React Router gives you `Link` and `NavLink` instead. `NavLink` is the one to use in navigation menus because it automatically adds an `active` CSS class to whichever link matches the current URL. That way you can style the current page link differently without any manual logic.
+
 ## Project structure
 
 ```
 src/
     pages/      ← page-level components matched to routes
-    components/ ← reusable UI components (coming soon)
+        Homepage.jsx
+        Product.jsx
+        Pricing.jsx
+        PageNotFound.jsx
+    components/ ← reusable UI components
+        PageNav.jsx
     App.jsx     ← route definitions live here
 ```
