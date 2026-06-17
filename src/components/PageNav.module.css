@@ -1,0 +1,16 @@
+/* Scope through .nav class - never select ul directly (would leak globally) */
+.nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Style React Router's "active" class - must use :global() since it' not 
+defined by us and CSS Modules would otherwise rename our own .active */
+.nav :global(.active) {
+  background-color: green;
+}
+
+:global(.test) {
+  background-color: red;
+}

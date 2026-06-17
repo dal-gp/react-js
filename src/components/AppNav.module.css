@@ -1,0 +1,4 @@
+/* Same class name "nav" as PageNav.module.css - proves no clash */
+.nav {
+  background-color: rebeccapurple;
+}
