@@ -3,6 +3,14 @@
 A travel tracking app where you can log all the cities you have visited around
 the world. Built to learn React Router and how single page applications work.
 
+## What it does
+
+- A marketing homepage with a "Start tracking now" button
+- Product and Pricing pages
+- A login page (pre-filled with test credentials for development)
+- Navigation that highlights the current page
+- A placeholder /app route for the actual application (cities/map view, coming soon)
+
 ## How to run it
 
 ```bash
@@ -31,19 +39,27 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **CSS Modules** - instead of one big global CSS file, each component gets its own `.module.css` file. Behind the scenes every class name gets a random string attached to it, so two components can both have a class called `.nav` and they will never clash. The only tricky part was styling React Router's `active` class - since that class name comes from an external library and is nto scoped by CSS Modules, I had to wrap it with `:global(.active)` so it matches the literal class name instead of getting renamed.
 
+**camelCase class names** - when writing CSS Modules you have to name your classes in camelCase (like `ctaLink`) instead of the usual kebab-case (`case-link`). The reason is that CSS Module classes get exported as a JS object, and `styles.cta-link` is not valid JavaScript. You would need `sytles["cta-link"]` instead, which is annoying, so camelCase is the convention.
+
+**public/ vs src/assets/** - images that you reference by a plain string path (`src="/logo.png"`) go in the `public/` folder. Images you want to `import` directly int your JS go in `src/assets/`. I used the public folder approach for all the images here, which keeps things simple.
+
 ## Project structure
 
 ```
 src/
     pages/      ← page-level components matched to routes
-        Homepage.jsx
-        Product.jsx
-        Pricing.jsx
-        PageNotFound.jsx
+        Homepage.jsx + Homepage.module.css
+        Product.jsx + Product.module.css
+        Pricing.jsx         ← shares Product.module.css
+        Login.jsx + Login.module.css
         AppLayout.jsx       ← main app screen (list + map), still a placeholder
+        PageNotFound.jsx
     components/ ← reusable UI components
         PageNav.jsx + PageNav.module.css
         AppNav.jsx + AppNav.module.css
-    index.css   ← truly global styles (resets, fonts, CSS variables)
-    App.jsx     ← route definitions live here
+        Logo.jsx + Logo.module.css
+    index.css   ← global resets, fonts, CSS variables, .cta class
+    App.jsx     ← route definitions
+data/           ← will hold city/country data for the main app
+public/         ← images referenced by URL (log.png, bg.jpg, etc)
 ```
