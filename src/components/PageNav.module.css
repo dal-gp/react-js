@@ -1,16 +1,35 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 /* Scope through .nav class - never select ul directly (would leak globally) */
 .nav ul {
   list-style: none;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 4rem;
+}
+
+.nav a:link,
+.nav a:visited {
+  text-decoration: none;
+  color: var(--color-light--2);
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 /* Style React Router's "active" class - must use :global() since it' not 
 defined by us and CSS Modules would otherwise rename our own .active */
-.nav :global(.active) {
-  background-color: green;
+.nav a:global(.active) {
+  color: var(--color-brand--2);
 }
 
-:global(.test) {
-  background-color: red;
+a.ctaLink:link,
+a.ctaLink:visited {
+  background-color: var(--color-brand--2);
+  color: var(--color-dark--0);
+  padding: 0.8rem 2rem;
+  border-radius: 7px;
 }
