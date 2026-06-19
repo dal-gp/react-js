@@ -3,6 +3,8 @@
 A travel tracking app where you can log all the cities you have visited around
 the world. Built to learn React Router and how single page applications work.
 
+> **Work in progress** - this README gets updated as new features are added.
+
 ## What it does
 
 - A marketing homepage with a "Start tracking now" button
@@ -58,6 +60,8 @@ src/
         PageNav.jsx + PageNav.module.css
         AppNav.jsx + AppNav.module.css
         Logo.jsx + Logo.module.css
+        Sidebar.jsx + Sidebar.module.css
+        Map.jsx + Map.module.jsx
     index.css   ← global resets, fonts, CSS variables, .cta class
     App.jsx     ← route definitions
 data/           ← will hold city/country data for the main app
