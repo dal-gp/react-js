@@ -1,13 +1,16 @@
 /**
  * Layout for the main application screen (list + map view).
- * Placeholder for now - full content added in later.
+ * Kept intenstially minimal - all content and logic lives inside components.
+ * No compositions needed here since no props are passed through AppLayout
  */
-import AppNav from "../components/AppNav";
+import Map from "../components/Map";
+import Sidebar from "../components/Sidebar";
+import styles from "./AppLayout.module.css";
 function AppLayout() {
   return (
-    <div>
-      <AppNav />
-      <p>AppLayout</p>
+    <div className={styles.app}>
+      <Sidebar />
+      <Map />
     </div>
   );
 }
