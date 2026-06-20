@@ -39,6 +39,8 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **Link vs NavLink** - you can't use a regular `<a>` tag for internal navigation in a React app because it causes a full page reload. React Router gives you `Link` and `NavLink` instead. `NavLink` is the one to use in navigation menus because it automatically adds an `active` CSS class to whichever link matches the current URL. That way you can style the current page link differently without any manual logic.
 
+**Nested routes and Outlet** - this was the most intersting routing concept so far. When you want different content to show inside the same layout based on URL, you use nested routes. For example, /app/cities and /app/countries both show the AppLayout but with different content in the sidebar. The Outlet component is what makes this work - it is a placeholder inside the parent component where React Router drops in the matched child route. Without Outlet, nested routes would be defined but nothing would actually render.
+
 **CSS Modules** - instead of one big global CSS file, each component gets its own `.module.css` file. Behind the scenes every class name gets a random string attached to it, so two components can both have a class called `.nav` and they will never clash. The only tricky part was styling React Router's `active` class - since that class name comes from an external library and is nto scoped by CSS Modules, I had to wrap it with `:global(.active)` so it matches the literal class name instead of getting renamed.
 
 **camelCase class names** - when writing CSS Modules you have to name your classes in camelCase (like `ctaLink`) instead of the usual kebab-case (`case-link`). The reason is that CSS Module classes get exported as a JS object, and `styles.cta-link` is not valid JavaScript. You would need `sytles["cta-link"]` instead, which is annoying, so camelCase is the convention.
@@ -65,5 +67,5 @@ src/
     index.css   ← global resets, fonts, CSS variables, .cta class
     App.jsx     ← route definitions
 data/           ← will hold city/country data for the main app
-public/         ← images referenced by URL (log.png, bg.jpg, etc)
+public/         ← images referenced by URL (logo.png, bg.jpg, etc)
 ```
