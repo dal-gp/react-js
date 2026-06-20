@@ -11,7 +11,9 @@ the world. Built to learn React Router and how single page applications work.
 - Product and Pricing pages
 - A login page (pre-filled with test credentials for development)
 - Navigation that highlights the current page
-- A placeholder /app route for the actual application (cities/map view, coming soon)
+- The main app at /app with a sidebar showing a list of visited cities loaded from a fake API
+- Loading spinner while cities are being fetched
+- Empty state message when no cities have been added yet
 
 ## How to run it
 
