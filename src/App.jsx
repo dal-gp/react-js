@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import AppLayout from "./pages/AppLayout";
 import CityList from "./components/CityList";
 import { useEffect, useState } from "react";
+import CountryList from "./components/CountryList";
 
 /**
  * Root component - defines all application routes.
@@ -68,7 +69,10 @@ function App() {
             element={<CityList cities={cities} isLoading={isLoading} />}
           />
           {/* /app/countries */}
-          <Route path="countries" element={<p>Countries</p>} />
+          <Route
+            path="countries"
+            element={<CountryList cities={cities} isLoading={isLoading} />}
+          />
           {/* /app/form - linked from map click, not from AppNav*/}
           <Route path="form" element={<p>Form</p>} />
         </Route>
