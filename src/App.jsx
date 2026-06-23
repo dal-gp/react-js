@@ -8,6 +8,7 @@ import AppLayout from "./pages/AppLayout";
 import CityList from "./components/CityList";
 import { useEffect, useState } from "react";
 import CountryList from "./components/CountryList";
+import City from "./components/City";
 
 /**
  * Root component - defines all application routes.
@@ -68,6 +69,8 @@ function App() {
             path="cities"
             element={<CityList cities={cities} isLoading={isLoading} />}
           />
+          {/* Dynamic route - :id will be any city id */}
+          <Route path="cities/:id" element={<City />} />
           {/* /app/countries */}
           <Route
             path="countries"
