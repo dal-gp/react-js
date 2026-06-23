@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 /**
  * Detailed view for a single city.
@@ -11,7 +11,17 @@ function City() {
    * Route is "cities/:id" → returns {id: "1234567"}
    */
   const { id } = useParams();
-  return <div>City {id}</div>;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+  return (
+    <div>
+      <h1>City {id}</h1>
+      <p>
+        Position: {lat}, {lng}
+      </p>
+    </div>
+  );
 }
 
 export default City;

@@ -20,6 +20,10 @@ const formatDate = (date) =>
  * Delete button has no functionality yet.
  * Clicking navigates to /app/cities/:id
  * Uses relative path (no leading slash) so it appends to /app/cities.
+ * Builds the URL for this city's details page
+ * - id ( URL param ): identifies which city to show
+ * - lat, lng (query string): passes map position globally via URL
+ *   so Map component can read it without prop drilling
  *
  * @param {{emoji: string, cityName: string, date: string, id: number}} city
  */
@@ -30,7 +34,10 @@ function CityItem({ city }) {
           to={`${id}`}  → /app/cities/1234567
           to-{`/${id}`} → /1234567
       */}
-      <Link to={`${city.id} `} className={styles.cityItem}>
+      <Link
+        to={`${city.id}?lat=${city.position.lat}&lng=${city.position.lng} `}
+        className={styles.cityItem}
+      >
         <span className={styles.emoji}>{city.emoji}</span>
         <h3 className={styles.name}>{city.cityName}</h3>
         <time className={styles.date}>({formatDate(city.date)})</time>
