@@ -9,6 +9,7 @@ import CityList from "./components/CityList";
 import { useEffect, useState } from "react";
 import CountryList from "./components/CountryList";
 import City from "./components/City";
+import Form from "./components/Form";
 
 /**
  * Root component - defines all application routes.
@@ -36,7 +37,6 @@ function App() {
         setIsLoading(true);
         const res = await fetch(`${BASE_URL}/cities`);
         const data = await res.json();
-        console.log(data);
         setCities(data);
       } catch {
         alert("Something went wrong");
@@ -77,7 +77,7 @@ function App() {
             element={<CountryList cities={cities} isLoading={isLoading} />}
           />
           {/* /app/form - linked from map click, not from AppNav*/}
-          <Route path="form" element={<p>Form</p>} />
+          <Route path="form" element={<Form />} />
         </Route>
 
         <Route path="*" element={<PageNotFound />} />
