@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Product from "./pages/Product";
 import Pricing from "./pages/Pricing";
 import Homepage from "./pages/Homepage";
@@ -59,11 +59,11 @@ function App() {
             Pass cities and isLoading via element prop -
             this is why Route uses element={<JSX />} not component={Component} */}
         <Route path="app" element={<AppLayout />}>
-          {/* index route: /app with no sub-path shows cities by default */}
-          <Route
-            index
-            element={<CityList cities={cities} isLoading={isLoading} />}
-          />
+          {/* index route: /app with no sub-path shows cities by default 
+              /app redirects to /app/cities
+              replace: swaps history entry instead of pushing - Back button works
+              */}
+          <Route index element={<Navigate replace to="cities" />} />
           {/* /app/cities */}
           <Route
             path="cities"
