@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { faker } from "@faker-js/faker";
+import { PostProvider, usePosts } from "./PostContext";
 
 function createRandomPost() {
   return {
@@ -8,38 +9,9 @@ function createRandomPost() {
   };
 }
 
-/**
- * Context for post-related state.
- * No default value - it's static and useless for real state managment.
- * Named with uppercase because it is used as a component (Provider).
- */
-const PostContext = createContext();
-
 function App() {
-  const [posts, setPosts] = useState(() =>
-    Array.from({ length: 30 }, () => createRandomPost()),
-  );
-  const [searchQuery, setSearchQuery] = useState("");
+  // Only isFakeDark stay here - it's UI-only, unrelated to posts
   const [isFakeDark, setIsFakeDark] = useState(false);
-
-  // Derived state. These are the posts that will actually be displayed
-  const searchedPosts =
-    searchQuery.length > 0
-      ? posts.filter((post) =>
-          `${post.title} ${post.body}`
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()),
-        )
-      : posts;
-
-  function handleAddPost(post) {
-    setPosts((posts) => [post, ...posts]);
-  }
-
-  function handleClearPosts() {
-    setPosts([]);
-  }
-
   // Whenever `isFakeDark` changes, we toggle the `fake-dark-mode` class on the HTML element (see in "Elements" dev tool).
   useEffect(
     function () {
@@ -49,44 +21,28 @@ function App() {
   );
 
   return (
-    /**
-     * PostProvider wraps the entire app.
-     * value: the data object all consumers will receive.
-     * Double curly braces: outer {} = JSX expression, inner {} = JS object.
-     *
-     * Best practice: one context per state domain.
-     * Here we combine posts and search for simplicity while learning.
-     */
-    <PostContext.Provider
-      value={{
-        posts: searchedPosts,
-        onAddPost: handleAddPost,
-        onClearPosts: handleClearPosts,
-        searchQuery: searchQuery,
-        setSearchQuery,
-      }}
-    >
-      <section>
-        <button
-          onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
-          className="btn-fake-dark-mode"
-        >
-          {isFakeDark ? "☀️" : "🌙"}
-        </button>
+    <section>
+      <button
+        onClick={() => setIsFakeDark((isFakeDark) => !isFakeDark)}
+        className="btn-fake-dark-mode"
+      >
+        {isFakeDark ? "☀️" : "🌙"}
+      </button>
 
-        {/* No props needed - all data flow through context */}
+      {/* PostProvider wraps only what needs post data */}
+      <PostProvider>
         <Header />
         <Main />
         <Archive />
         <Footer />
-      </section>
-    </PostContext.Provider>
+      </PostProvider>
+    </section>
   );
 }
 
 // Header - only needs onClearPosts
 function Header() {
-  const { onClearPosts } = useContext(PostContext);
+  const { onClearPosts } = usePosts();
   return (
     <header>
       <h1>
@@ -103,7 +59,7 @@ function Header() {
 
 // SearchPosts - reads searchQuery and setter directly
 function SearchPosts() {
-  const { searchQuery, setSearchQuery } = useContext(PostContext);
+  const { searchQuery, setSearchQuery } = usePosts();
   return (
     <input
       value={searchQuery}
@@ -115,7 +71,7 @@ function SearchPosts() {
 
 // Results - reads posts directly, no props
 function Results() {
-  const { posts } = useContext(PostContext);
+  const { posts } = usePosts();
   return <p>🚀 {posts.length} atomic posts found</p>;
 }
 
@@ -151,7 +107,7 @@ function FormAddPost() {
     setBody("");
   };
 
-  const { onAddPost } = useContext(PostContext);
+  const { onAddPost } = usePosts();
 
   return (
     <form onSubmit={handleSubmit}>
@@ -172,7 +128,7 @@ function FormAddPost() {
 
 // List - reads posts directly
 function List() {
-  const { posts } = useContext(PostContext);
+  const { posts } = usePosts();
   return (
     <ul>
       {posts.map((post, i) => (
@@ -194,7 +150,7 @@ function Archive() {
   );
 
   const [showArchive, setShowArchive] = useState(false);
-  const { onAddPost } = useContext(PostContext);
+  const { onAddPost } = usePosts();
 
   return (
     <aside>
