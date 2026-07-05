@@ -57,6 +57,8 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **public/ vs src/assets/** - images that you reference by a plain string path (`src="/logo.png"`) go in the `public/` folder. Images you want to `import` directly int your JS go in `src/assets/`. I used the public folder approach for all the images here, which keeps things simple.
 
+**Context API for state management** - after learning React Router, the Context API was the next big thing. All the cities data (fetching, loading state, error handling) moved out of App.jsx into a CitiesContext.jsx file. App.jsx went from having useState, useEffect, BASE_URL, and prop passing all over the place to just having route defintions. Components like CityList now all useCities() to get their data directly - no props passed down from parent to child. The custom hook pattern with the undefined guard (throws a clear error if used outside the provider) is something I will use in every project going forward.
+
 ## Project structure
 
 ```
