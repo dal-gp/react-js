@@ -2,6 +2,7 @@ import CountryItem from "./CountryItem";
 import Message from "./Message";
 import Spinner from "./Spinner";
 import styles from "./CountryList.module.css";
+import { useCities } from "../contexts/CitiesContext";
 
 /**
  * Displays a deduplicated list of countries derived from the cities array.
@@ -11,7 +12,8 @@ import styles from "./CountryList.module.css";
  * @param {Array} cities - Full cities array from App state
  * @param {boolean} isLoading - True while cities are being fetched
  */
-function CountryList({ cities, isLoading }) {
+function CountryList() {
+  const { cities, isLoading } = useCities();
   if (isLoading) return <Spinner />;
   if (!cities.length)
     return (
