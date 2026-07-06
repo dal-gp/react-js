@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./CityItem.module.css";
+import { useCities } from "../contexts/CitiesContext";
 
 /**
  * Formats an ISO date string to a human-readable format.
@@ -17,26 +18,33 @@ const formatDate = (date) =>
 
 /**
  * Single city list item - shows emoji, name, date and delete button.
- * Delete button has no functionality yet.
  * Clicking navigates to /app/cities/:id
  * Uses relative path (no leading slash) so it appends to /app/cities.
  * Builds the URL for this city's details page
  * - id ( URL param ): identifies which city to show
  * - lat, lng (query string): passes map position globally via URL
  *   so Map component can read it without prop drilling
+ * Highlights itself when it matches the currently viewed city.
+ * Uses currentCity from context - no props needed.
  *
  * @param {{emoji: string, cityName: string, date: string, id: number}} city
  */
 function CityItem({ city }) {
+  /**
+   * currentCity: the city currently being viewed in the detail panel.
+   * Compare IDs (not object) - smae city fetched at different times
+   * will have different object references but the same id.
+   */
+  const { currentCity } = useCities();
   return (
     <li>
-      {/* Relative path: appends id to curent /app/cities URL 
+      {/* Relative path: appends id to curent /app/cities URL
           to={`${id}`}  → /app/cities/1234567
           to-{`/${id}`} → /1234567
       */}
       <Link
         to={`${city.id}?lat=${city.position.lat}&lng=${city.position.lng} `}
-        className={styles.cityItem}
+        className={`${styles.cityItem} ${city.id === currentCity.id ? styles["cityItem--active"] : ""}`}
       >
         <span className={styles.emoji}>{city.emoji}</span>
         <h3 className={styles.name}>{city.cityName}</h3>

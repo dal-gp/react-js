@@ -19,7 +19,15 @@ function CitiesProvider({ children }) {
    * @type {[Array, Function]}
    */
   const [cities, setCities] = useState([]);
+
   const [isLoading, setIsLoading] = useState(false);
+
+  /**
+   * Starts as {} not null - safe to destructure even before data loads
+   * @type {[Object, Function]}
+   */
+  const [currentCity, setCurrentCity] = useState({});
+
   useEffect(function () {
     /**
      * fetches all cities from API on intial render.
@@ -39,8 +47,34 @@ function CitiesProvider({ children }) {
     }
     fetchCities();
   }, []);
+
+  /**
+   * Fetches a single city by ID from the API.
+   * Called by the City component when it mounts or when the URL id changes.
+   *
+   * @param {string} id - City ID from the URL param
+   */
+  async function getCity(id) {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${BASE_URL}/cities/${id}`);
+      const data = await res.json();
+      setCurrentCity(data);
+    } catch {
+      alert("There was an error loading the city...");
+    } finally {
+      setIsLoading(false);
+    }
+  }
   return (
-    <CitiesContext.Provider value={{ cities, isLoading }}>
+    <CitiesContext.Provider
+      value={{
+        cities,
+        isLoading,
+        currentCity, // the single city being viewed
+        getCity, // function to fetch a city by id
+      }}
+    >
       {children}
     </CitiesContext.Provider>
   );

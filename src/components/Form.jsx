@@ -2,6 +2,7 @@ import { useState } from "react";
 import styles from "./Form.module.css";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
+import BackButton from "./BackButton";
 function Form() {
   const [cityName, setCityName] = useState("");
   const [date, setDate] = useState(new Date());
@@ -38,19 +39,7 @@ function Form() {
       </div>
       <div className={styles.buttons}>
         <Button type="primary">Add</Button>
-
-        {/* Back button: must prevent default to stop form submission
-            Without e.preventDefault(): clicking submits form → page reloads
-            navigate(-1) never fires because reload happens first */}
-        <Button
-          type="back"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(-1);
-          }}
-        >
-          &larr; Back
-        </Button>
+        <BackButton />
       </div>
     </form>
   );
