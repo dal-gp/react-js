@@ -4,3 +4,7 @@
   background-color: var(--color-dark--2);
   position: relative;
 }
+
+.map {
+  height: 100%;
+}
