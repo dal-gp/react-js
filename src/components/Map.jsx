@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import styles from "./Map.module.css";
+import { useCities } from "../contexts/CitiesContext";
 
 /**
  * Interactive map using React Leaflet.
@@ -22,6 +23,12 @@ function Map() {
   const [searchParams, setSearchParams] = useSearchParams();
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
+
+  /**
+   * cities: read directly from context - no props needed.
+   * THis is the power of global state - just grab it anywhere.
+   */
+  const { cities } = useCities();
 
   /**
    * State because it will update when user selects a city.
@@ -45,12 +52,20 @@ function Map() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
         />
-        {/* Placeholder marker */}
-        <Marker position={mapPosition}>
-          <Popup>
-            A pretty CSS3 popup. <br /> Easily customizable.
-          </Popup>
-        </Marker>
+
+        {/* One marker per city - position from city.position.lat/lng */}
+        {cities.map((city) => (
+          <Marker
+            position={[city.position.lat, city.position.lng]}
+            key={city.id}
+          >
+            {/* Popup content: emoji + city name */}
+            <Popup>
+              <span>{city.emoji}</span>
+              <span>{city.cityName}</span>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
