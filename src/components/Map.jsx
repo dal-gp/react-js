@@ -1,7 +1,14 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import styles from "./Map.module.css";
 import { useCities } from "../contexts/CitiesContext";
 
@@ -21,8 +28,10 @@ function Map() {
    * setSearchParams: updates the query string (replaces entirely)
    */
   const [searchParams, setSearchParams] = useSearchParams();
-  const lat = searchParams.get("lat");
-  const lng = searchParams.get("lng");
+
+  // Read city position from URL query string (set when user clicks a city)
+  const mapLat = searchParams.get("lat");
+  const mapLng = searchParams.get("lng");
 
   /**
    * cities: read directly from context - no props needed.
@@ -32,15 +41,29 @@ function Map() {
 
   /**
    * State because it will update when user selects a city.
+   * mapPosition: the remembered map center.
+   * Persisits in state so map doesnot jump back to default
+   * when query string disappears (e.g. user clicks Back).
    * @type {[Array, Function]}
    */
   const [mapPosition, setMapPosition] = useState([40, 0]);
+
+  /**
+   * Sync URL lat/lng into mapPosition state.
+   * Only updates when both values exist - prevents reset on Back navigation.
+   */
+  useEffect(
+    function () {
+      if (mapLat && mapLng) setMapPosition([mapLat, mapLng]);
+    },
+    [mapLat, mapLng],
+  );
   return (
     <div className={styles.mapContainer}>
       <MapContainer
         className={styles.map} // REQUIRED: sets height 100% so map is visible
         center={mapPosition}
-        zoom={13}
+        zoom={6}
         scrollWheelZoom={true} //false by default - enable for usability
       >
         {/*
@@ -66,9 +89,49 @@ function Map() {
             </Popup>
           </Marker>
         ))}
+
+        {/* Moves map to mapPosition whenever it changes */}
+        <ChangeCenter position={mapPosition} />
+
+        {/* Handles map clicks -> navigate to form with lat/lng */}
+        <DetectClick />
       </MapContainer>
     </div>
   );
+}
+
+/**
+ * Moves the map to a new position when position prop changes.
+ * Required because MapContainer center prop is NOT reactive.
+ * Must be rendered inside MapContainer to access the map instance.
+ *
+ * @param {Array} position - [lat, lng] to center the map on
+ * @returns {null} Renders nothing - only has a side effect
+ */
+function ChangeCenter({ position }) {
+  const map = useMap(); // gets current Leaflet map instance
+  map.setView(position);
+  return null;
+}
+
+/**
+ * Detects map clicks and navigates to the form with lat/lng in URL.
+ * useMapEvents is the React Leaflet way to handle map events.
+ * Must be rendered inside MapContainer.
+ *
+ * @returns {null} Renders nothing - only has a side effect
+ */
+function DetectClick() {
+  const navigate = useNavigate();
+  useMapEvents({
+    /**
+     * e.latlng: Leaflet's clicked position object {lat, lng}
+     * Not a native browser event = comes from Leaflet's event system.
+     * Pass position to form via query string - no global state needed.
+     */
+    click: (e) => navigate(`form?lat=${e.latlng.lat}&lng=${e.latlng.lng}`),
+  });
+  return null;
 }
 
 export default Map;
