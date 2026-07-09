@@ -1,7 +1,8 @@
 # WorldWise
 
 A travel tracking app where you can log all the cities you have visited around
-the world. Built to learn React Router and how single page applications work.
+the world. Built to learn React Router, the Context API, and how to build a
+real-world single page application with an interactive map.
 
 > **Work in progress** - this README gets updated as new features are added.
 
@@ -12,13 +13,30 @@ the world. Built to learn React Router and how single page applications work.
 - A login page (pre-filled with test credentials for development)
 - Navigation that highlights the current page
 - The main app at /app with a sidebar showing a list of visited cities loaded from a fake API
+- Countries list derived automatically from the cities data
 - Loading spinner while cities are being fetched
 - Empty state message when no cities have been added yet
+- Click a city in the list to see its full detail view (name, date, notes, flag)
+- Active city highligthted in the list while its detail is open
+- Interactive Leaflet map with markers and popups for each visited city
+- Click anywhere on the map to open the add-city form
+- Map moves to the selected city when clicked in the list
+- "Use your position" button moves the map to your GPS location
 
 ## How to run it
 
+You need two terminals.
+
+**Terminal 1 - fake API:**
+
 ```bash
 npm install
+npm run server
+```
+
+**Terminal 2 - React app**
+
+```bash
 npm run dev
 ```
 
@@ -32,6 +50,9 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 - Vite (build tool)
 - React Router (routing and navigation)
 - CSS Modules (component-scoped styling)
+- React Leaflet + Leaflet (interactive map)
+- json-server (fake REST API for cities data)
+- BigDataCloud reverse geocoding API (free, no API key)
 
 ## What I learned
 
@@ -59,6 +80,10 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **Context API for state management** - after learning React Router, the Context API was the next big thing. All the cities data (fetching, loading state, error handling) moved out of App.jsx into a CitiesContext.jsx file. App.jsx went from having useState, useEffect, BASE_URL, and prop passing all over the place to just having route defintions. Components like CityList now all useCities() to get their data directly - no props passed down from parent to child. The custom hook pattern with the undefined guard (throws a clear error if used outside the provider) is something I will use in every project going forward.
 
+**React Leaflet** - two packages needed: `leaflet` (the base library) and `react-leaflet` (the React wrapper). The Leaflet CSS must be imported globally - not in a CSS module. The `MapContainer` `center` prop is not reactive, so moving the map requires a custom component that uses the `useMap()` hook to call `map.setView()`. Detecting map clicks needs `useMapEvents({click: e => ... })` inside another custom component. Both return null - they exist only for their side effects.
+
+**Geolocation** - the `useGeolocation` custom hook I build earlier in the course dropped straight into this project with no changes. This was the first time I saw the real value of custom hooks being portable between projects.
+
 ## Project structure
 
 ```
@@ -76,8 +101,20 @@ src/
         Logo.jsx + Logo.module.css
         Sidebar.jsx + Sidebar.module.css
         Map.jsx + Map.module.jsx
-    index.css   ← global resets, fonts, CSS variables, .cta class
-    App.jsx     ← route definitions
-data/           ← will hold city/country data for the main app
-public/         ← images referenced by URL (logo.png, bg.jpg, etc)
+        CityList.jsx + CityList.module.css
+        CityItem.jsx + CityItem.module.css
+        CountryList.jsx + CountryList.module.css
+        CountryItem.jsx + CountryItem.module.css
+        Button.jsx + Button.module.css
+        BackButton.jsx + BackButton.module.css
+        Spinner.jsx + Spinner.module.css
+        Message.jsx + Message.module.css
+    contexts/
+        CitiesContext.jsx   ← cities state, fetching, useCities() hook
+    hooks/
+        useGeolocation.jsx  ← reusable geolocation hook
+    index.css               ← global resets, fonts, CSS variables, .cta class
+    App.jsx                 ← route definitions
+data/                       ← will hold city/country data for the main app
+public/                     ← images referenced by URL (logo.png, bg.jpg, etc)
 ```
