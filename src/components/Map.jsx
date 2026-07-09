@@ -11,6 +11,9 @@ import {
 } from "react-leaflet";
 import styles from "./Map.module.css";
 import { useCities } from "../contexts/CitiesContext";
+import { useGeolocation } from "../hooks/useGeolocation";
+
+import Button from "./Button";
 
 /**
  * Interactive map using React Leaflet.
@@ -49,6 +52,17 @@ function Map() {
   const [mapPosition, setMapPosition] = useState([40, 0]);
 
   /**
+   * Rename destructred values to avoid naming collisions:
+   * isLoading -> isLoadingPosition (cities context also has isLoading)
+   * position -> geolocationPosition (more specific, avoids ambiguity)
+   */
+  const {
+    isLoading: isLoadingPosition,
+    position: geolocationPosition,
+    getPosition,
+  } = useGeolocation();
+
+  /**
    * Sync URL lat/lng into mapPosition state.
    * Only updates when both values exist - prevents reset on Back navigation.
    */
@@ -58,8 +72,29 @@ function Map() {
     },
     [mapLat, mapLng],
   );
+
+  /**
+   * Sync geolocation position into mapPosition.
+   * Can't write to mapPosition directly from inside the hook,
+   * so useEffect watches geolocationPosition and syncs it.
+   * Trade-off: introduces one extra render cycle.
+   */
+  useEffect(
+    function () {
+      if (geolocationPosition)
+        setMapPosition([geolocationPosition.lat, geolocationPosition.lng]);
+    },
+    [geolocationPosition],
+  );
   return (
     <div className={styles.mapContainer}>
+      {/* Button outside MapContainer - Leaflet doesnot handle React events */}
+      {/* Hidden once position found - no value in showing it again */}
+      {!geolocationPosition && (
+        <Button type="position" onClick={getPosition}>
+          {isLoadingPosition ? "Loading..." : "Use your position"}
+        </Button>
+      )}
       <MapContainer
         className={styles.map} // REQUIRED: sets height 100% so map is visible
         center={mapPosition}

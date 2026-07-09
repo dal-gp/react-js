@@ -20,3 +20,17 @@
   font-weight: 600;
   border: 1px solid currentColor;
 }
+
+.position {
+  color: var(--color-dark--1);
+  background-color: var(--color-brand--2);
+  font-size: 1.4rem;
+  font-weight: 700;
+  box-shadow: 0 0.4rem 1.2rem rgba(36, 42, 46, 0.16);
+
+  position: absolute;
+  z-index: 1000;
+  bottom: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
