@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { useUrlPosition } from "../hooks/useUrlPosition";
+
 import {
   MapContainer,
   Marker,
@@ -27,16 +29,6 @@ import Button from "./Button";
  */
 function Map() {
   /**
-   * searchParams: URLSearchParams instance - use .get(), not dot notation
-   * setSearchParams: updates the query string (replaces entirely)
-   */
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  // Read city position from URL query string (set when user clicks a city)
-  const mapLat = searchParams.get("lat");
-  const mapLng = searchParams.get("lng");
-
-  /**
    * cities: read directly from context - no props needed.
    * THis is the power of global state - just grab it anywhere.
    */
@@ -61,6 +53,12 @@ function Map() {
     position: geolocationPosition,
     getPosition,
   } = useGeolocation();
+
+  /**
+   * Read lat/lng from URL - set when user clicked the city
+   * useUrlPosition encapsulates the useSearchParams logic for reuse.
+   */
+  const [mapLat, mapLng] = useUrlPosition();
 
   /**
    * Sync URL lat/lng into mapPosition state.
