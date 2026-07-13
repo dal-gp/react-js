@@ -66,6 +66,33 @@ function CitiesProvider({ children }) {
       setIsLoading(false);
     }
   }
+
+  /**
+   * Creates a new city via POST request and updates local state.
+   * Must update setCities manually - remote state change don't
+   * automatically reflect in UI state (React Query handles this in bigger apps).
+   *
+   * @params {Object} newCity - City object to save: { cityName, countryName, emoji, date, notes, position}
+   */
+  async function createCity(newCity) {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${BASE_URL}/cities`, {
+        method: "POST",
+        body: JSON.stringify(newCity),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json(); // data = newCity with id assigned by json-server
+      // console.log(data);
+
+      // Manually sync UI state - without this, city only appears after page reload
+      setCities((c) => [...c, data]);
+    } catch {
+      alert("There was an error loading data...");
+    } finally {
+      setIsLoading(false);
+    }
+  }
   return (
     <CitiesContext.Provider
       value={{
@@ -73,6 +100,7 @@ function CitiesProvider({ children }) {
         isLoading,
         currentCity, // the single city being viewed
         getCity, // function to fetch a city by id
+        createCity,
       }}
     >
       {children}
@@ -80,6 +108,10 @@ function CitiesProvider({ children }) {
   );
 }
 
+/**
+ * Custom hook to consume CitiesContext.
+ * Throws a clear error if used outside CitiesProvider.
+ */
 function useCities() {
   const context = useContext(CitiesContext);
   if (context === undefined)
