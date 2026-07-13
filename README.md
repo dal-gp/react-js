@@ -25,6 +25,9 @@ real-world single page application with an interactive map.
 - Click the map to open a fom that auto-fills city and country via a free reverse geocoding API ( no key needed)
 - Flag emoji derived automatically from the country code
 - Friendly error message if user clicks in the ocean or somewhwere with no city
+- Date picker to select when you visited the city
+- Submit the form to save the city - appears in the list immediately
+- Form shows a loading/disabled state while saving
 
 ## How to run it
 
@@ -87,6 +90,14 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **Geolocation** - the `useGeolocation` custom hook I build earlier in the course dropped straight into this project with no changes. This was the first time I saw the real value of custom hooks being portable between projects.
 
+**Reverse geocoding in the form** - when the form opens after a map click, it reads `lat` and `lng` from the URL query string and immediately fetches the BigDataCloud reverse geocoding API to get the city name, country, and country code. The country code gets covnerted to a flag emoji using a clever Unicode trick (`convertToEmoji`). I also had to handle the case where the user clicks in the ocean - the API returns no `countryCode` in that case, so i throw an error and show a message instead of a broken form. One thing that was easy to miss: `lat` and `lng` must be in the `useEffect` dependency array, otherwise clicking a different spot on the map does nothing - the form just shows stale data from the first click.
+
+**useUrlPosition custom hook** - both Map and Form needed to read `lat` and `lng` from the URL query string. Instead of duplicating the `useSearchParams` logic in both, I extracted it into a `useUrlPosition` hook that returns `[lat, lng]`. This was the first time I built a custom hook on top of another custom hook (`useSearchParams` from React Router) - that is completely fine as long as there is at least one React hook inside.
+
+**Creating data with a POST request** - the form submits a POST request to json-server to save a new city. One thing that surprised me: after the POST succeeds, the cities list in the sidebar doesn't automatically update. I had to manually add the new city to the React state array with `setCities(c => [...c, data])`. This is fine for a small app but in a bigger project React Query handles this automatically. The other important thing was making `handleSubmit` async so i could `await createCity(newCity)` before calling `navigate("/app/cities")`. Without the await, the navigation fires before the city is saved and the list looks wrong.
+
+**react-datepicker** - swapped the plain date text input for a proper date picker component from npm. The main difference from a normal input: the `onChange` callback receives a `Date` object directly, not an event, so it's `(date) => setDate(date)` not `(e) => setDate(e.target.value)`.
+
 ## Project structure
 
 ```
@@ -112,10 +123,12 @@ src/
         BackButton.jsx + BackButton.module.css
         Spinner.jsx + Spinner.module.css
         Message.jsx + Message.module.css
+        Form.jsx + Form.module.css
     contexts/
         CitiesContext.jsx   ← cities state, fetching, useCities() hook
     hooks/
         useGeolocation.jsx  ← reusable geolocation hook
+        useUrlPosition.js   ← reusable url position hook
     index.css               ← global resets, fonts, CSS variables, .cta class
     App.jsx                 ← route definitions
 data/                       ← will hold city/country data for the main app
