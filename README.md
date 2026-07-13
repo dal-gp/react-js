@@ -22,6 +22,9 @@ real-world single page application with an interactive map.
 - Click anywhere on the map to open the add-city form
 - Map moves to the selected city when clicked in the list
 - "Use your position" button moves the map to your GPS location
+- Click the map to open a fom that auto-fills city and country via a free reverse geocoding API ( no key needed)
+- Flag emoji derived automatically from the country code
+- Friendly error message if user clicks in the ocean or somewhwere with no city
 
 ## How to run it
 
