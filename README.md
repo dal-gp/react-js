@@ -28,6 +28,7 @@ real-world single page application with an interactive map.
 - Date picker to select when you visited the city
 - Submit the form to save the city - appears in the list immediately
 - Form shows a loading/disabled state while saving
+- Delete a city by click x button on any list
 
 ## How to run it
 
@@ -95,6 +96,8 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 **useUrlPosition custom hook** - both Map and Form needed to read `lat` and `lng` from the URL query string. Instead of duplicating the `useSearchParams` logic in both, I extracted it into a `useUrlPosition` hook that returns `[lat, lng]`. This was the first time I built a custom hook on top of another custom hook (`useSearchParams` from React Router) - that is completely fine as long as there is at least one React hook inside.
 
 **Creating data with a POST request** - the form submits a POST request to json-server to save a new city. One thing that surprised me: after the POST succeeds, the cities list in the sidebar doesn't automatically update. I had to manually add the new city to the React state array with `setCities(c => [...c, data])`. This is fine for a small app but in a bigger project React Query handles this automatically. The other important thing was making `handleSubmit` async so i could `await createCity(newCity)` before calling `navigate("/app/cities")`. Without the await, the navigation fires before the city is saved and the list looks wrong.
+
+**Deleting data with a DELETE request** - simpler than POST. Just pass {method: "DELETE"} to fetch with the resource URL - no body, no headers, no response to parse. The tricky part was the delete button living inside a <Link> element. Clicking the button was also triggering the link navigation to the city detail page. Fix: `e.preventDefault()` in the button's onClick handler stops the parent link from firing. Then manually remove the city from the state array with `filter` so it disappears immediately without a page reload.
 
 **react-datepicker** - swapped the plain date text input for a proper date picker component from npm. The main difference from a normal input: the `onChange` callback receives a `Date` object directly, not an event, so it's `(date) => setDate(date)` not `(e) => setDate(e.target.value)`.
 
