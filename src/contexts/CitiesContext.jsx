@@ -88,7 +88,25 @@ function CitiesProvider({ children }) {
       // Manually sync UI state - without this, city only appears after page reload
       setCities((c) => [...c, data]);
     } catch {
-      alert("There was an error loading data...");
+      alert("There was an error creating city.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  /**
+   * Deletes a city by ID from the API and removes it from local state.
+   * Uses filter (not splice) - never mutate state directly.
+   *
+   * @param {Number} id - ID of the city to delete
+   */
+  async function deleteCity(id) {
+    try {
+      setIsLoading(true);
+      await fetch(`${BASE_URL}/cities/${id}`, { method: "DELETE" });
+      setCities((cities) => cities.filter((city) => city.id !== id));
+    } catch {
+      alert("There was an error creating city.");
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +119,7 @@ function CitiesProvider({ children }) {
         currentCity, // the single city being viewed
         getCity, // function to fetch a city by id
         createCity,
+        deleteCity,
       }}
     >
       {children}

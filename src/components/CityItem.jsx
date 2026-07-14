@@ -32,10 +32,22 @@ const formatDate = (date) =>
 function CityItem({ city }) {
   /**
    * currentCity: the city currently being viewed in the detail panel.
-   * Compare IDs (not object) - smae city fetched at different times
+   * Compare IDs (not object) - same city fetched at different times
    * will have different object references but the same id.
    */
-  const { currentCity } = useCities();
+  const { currentCity, deleteCity } = useCities();
+
+  /**
+   * Handles delete button click.
+   * e.preventDefault() required - button is inside a <Link>,
+   * without it clicking x also triggers link navigation to city detail.
+   *
+   * @param {MouseEvent} e
+   */
+  function handleClick(e) {
+    e.preventDefault();
+    deleteCity(city.id);
+  }
   return (
     <li>
       {/* Relative path: appends id to curent /app/cities URL
@@ -49,7 +61,9 @@ function CityItem({ city }) {
         <span className={styles.emoji}>{city.emoji}</span>
         <h3 className={styles.name}>{city.cityName}</h3>
         <time className={styles.date}>({formatDate(city.date)})</time>
-        <button className={styles.deleteBtn}>&times;</button>
+        <button className={styles.deleteBtn} onClick={handleClick}>
+          &times;
+        </button>
       </Link>
     </li>
   );
