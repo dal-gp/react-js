@@ -18,9 +18,9 @@ function Homepage() {
           of. Never forget your wonderful experiences, and show your friends how
           you have wandered the world.
         </h2>
-        {/* "cta" is a GLOBAL class define din index.css - used in 
+        {/* "cta" is a GLOBAL class define din index.css - used in
         multiple places, so it doesn't make sense to scope it to one module */}
-        <Link to="/app" className="cta">
+        <Link to="/login" className="cta">
           Start tracking now
         </Link>
       </section>

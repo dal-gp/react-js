@@ -1,4 +1,4 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useContext } from "react";
 
 /**
  * Hardcoded fake user - in real auth this comes from a database.
@@ -28,7 +28,7 @@ function reducer(state, action) {
       return {
         ...state,
         isAuthenticated: true,
-        user: action.patyload,
+        user: action.payload,
       };
     }
     case "logout": {
@@ -39,7 +39,7 @@ function reducer(state, action) {
       };
     }
     default:
-      throw new Error("Unknown actoin");
+      throw new Error("Unknown action");
   }
 }
 
@@ -67,11 +67,13 @@ function AuthProvider({ children }) {
   function login(email, password) {
     if (email === FAKE_USER.email && password === FAKE_USER.password) {
       dispatch({ type: "login", payload: FAKE_USER });
+    } else {
+      console.log("Invalid credentials");
     }
   }
 
   /**
-   * Logsout the current user - resets user and isAuthenticated
+   * Logs out the current user - resets user and isAuthenticated
    */
   function logout() {
     dispatch({ type: "logout" });
