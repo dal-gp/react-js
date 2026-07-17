@@ -29,6 +29,10 @@ real-world single page application with an interactive map.
 - Submit the form to save the city - appears in the list immediately
 - Form shows a loading/disabled state while saving
 - Delete a city by click x button on any list
+- Login page with email and password (test credentials: jack@example.com / qwerty)
+- After login, redirected to the app automatically
+- Logged-in user shown in the top right corner with avatar and name
+- Logout button returns to the homepage
 
 ## How to run it
 
@@ -103,6 +107,8 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **react-datepicker** - swapped the plain date text input for a proper date picker component from npm. The main difference from a normal input: the `onChange` callback receives a `Date` object directly, not an event, so it's `(date) => setDate(date)` not `(e) => setDate(e.target.value)`.
 
+**Authentication flow** - the login redirect was the trickiest part here. After calling `login(email, password)`, the `isAuthenticated` state doesn't update until the next render -- so you can't just call `navigate("/app")` right after. Instead I used a `useEffect` that watches `isAuthenticated` and redirects when it becomes true. This also handles the case where an already-logged-in user visits the login page -- the effect fires immediately and redirects them. The `{replace: true}` option on navigate is essential -- without it, clicking Back after login sends you to the login page, which immediately redirects you forward again (an infinite loop). With replace, the login page is removed from history entirely. For logout: I had to navigate away before React re-renders the User component with a null user object, otherwise reading `user.avatar` crashes.
+
 ## Project structure
 
 ```
@@ -129,8 +135,10 @@ src/
         Spinner.jsx + Spinner.module.css
         Message.jsx + Message.module.css
         Form.jsx + Form.module.css
+        User.jsx + User.module.css
     contexts/
         CitiesContext.jsx   ← cities state, fetching, useCities() hook
+        FakeAuthContext.jsx
     hooks/
         useGeolocation.jsx  ← reusable geolocation hook
         useUrlPosition.js   ← reusable url position hook
