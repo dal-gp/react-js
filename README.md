@@ -33,6 +33,7 @@ real-world single page application with an interactive map.
 - After login, redirected to the app automatically
 - Logged-in user shown in the top right corner with avatar and name
 - Logout button returns to the homepage
+- Protected routes -- visiting /app without logging in redirects to the homepage
 
 ## How to run it
 
@@ -109,6 +110,8 @@ Then open the URL shown in the terminal (usually [http://localhost:5173](http://
 
 **Authentication flow** - the login redirect was the trickiest part here. After calling `login(email, password)`, the `isAuthenticated` state doesn't update until the next render -- so you can't just call `navigate("/app")` right after. Instead I used a `useEffect` that watches `isAuthenticated` and redirects when it becomes true. This also handles the case where an already-logged-in user visits the login page -- the effect fires immediately and redirects them. The `{replace: true}` option on navigate is essential -- without it, clicking Back after login sends you to the login page, which immediately redirects you forward again (an infinite loop). With replace, the login page is removed from history entirely. For logout: I had to navigate away before React re-renders the User component with a null user object, otherwise reading `user.avatar` crashes.
 
+**Protected routes** - the ProtectedRoute component wraps AppLayout and checks `isAuthenticated` from the auth context. If false, it redirects to "/". There was a subtle bug `useEffect` fires _after_ the component renders, so without a null guard, the child component (including User) would try to render with a null user object and crash before the redirect could fire. The fix: return `null` when not authenticated so children never mount in the first place.
+
 ## Project structure
 
 ```
@@ -120,6 +123,7 @@ src/
         Login.jsx + Login.module.css
         AppLayout.jsx       ← main app screen (list + map), still a placeholder
         PageNotFound.jsx
+        ProtectedRoute.jsx
     components/ ← reusable UI components
         PageNav.jsx + PageNav.module.css
         AppNav.jsx + AppNav.module.css
