@@ -11,6 +11,7 @@ import City from "./components/City";
 import Form from "./components/Form";
 import { CitiesProvider } from "./contexts/CitiesContext";
 import { AuthProvider } from "./contexts/FakeAuthContext";
+import ProtectedRoute from "./pages/ProtectedRoute";
 
 /**
  * Root component - defines all application routes.
@@ -35,7 +36,15 @@ function App() {
             {/* Nested routes - child paths are relative to "app".
             Pass cities and isLoading via element prop -
             this is why Route uses element={<JSX />} not component={Component} */}
-            <Route path="app" element={<AppLayout />}>
+            {/* All nexted routes automatically protected */}
+            <Route
+              path="app"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
               {/* index route: /app with no sub-path shows cities by default
               /app redirects to /app/cities
               replace: swaps history entry instead of pushing - Back button works
